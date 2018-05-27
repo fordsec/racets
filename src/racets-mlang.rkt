@@ -22,34 +22,33 @@
 (define-syntax-rule (fac prin v1 v2)
   (facet prin v1 v2))
 
+(define-syntax-parameter pc (syntax-rules ()))
+
 ; Do nothing right now...
 (define-syntax-rule (fac-lambda (x ...) expr)
   (lambda (x ...) expr))
+; (fclo (lambda (x ...) expr) #,pc))
 
 (define-syntax (fac-module-begin stx)
   (syntax-case stx ()
       [(#%module-begin body ...)
        #`(#%plain-module-begin
-          (define-syntax-parameter pc (set))
+          (define pc (make-parameter (set)))
           body ...)]))
-
-(define-syntax-parameter pc 
- (lambda (stx)
-      (raise-syntax-error (syntax-e stx) "can only be used inside aif")))
 
 (define-syntax (fac-app stx)
   (syntax-case stx ()
-    [(#%app f a0 ...)
+    [(_ f a0 ...)
      #`(if (facet? f)
            (let* ([left
-                   (syntax-parameterize ([pc (set-add #'pc (pos (facet-label f)))])
+                   (parameterize ([pc (set-add pc (pos (facet-label f)))])
                      ((facet-left f) a0 ...))]
                   [right 
-                   (syntax-parameterize ([pc (set-add #'pc (neg (facet-label f)))])
+                   (parameterize ([pc (set-add pc (neg (facet-label f)))])
                      ((facet-left f) a0 ...))])
-                  (#'facet (facet-label f)
-                   left-side
-                   right-side))
+                  (facet (facet-label f)
+                         left
+                         right))
            (f a0 ...))]))
 
 (define-syntax (fac-continuation-mark stx)
