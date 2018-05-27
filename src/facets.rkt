@@ -11,6 +11,9 @@
 ; Facets
 (struct facet (label left right) #:transparent)
 
+; Faceted closures 
+(struct fclo (clo pc))
+
 ; Label comparison
 (define (label<? l1 l2)
   (match (cons l1 l2)
