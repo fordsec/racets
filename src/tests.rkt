@@ -12,10 +12,10 @@
    (lambda (x) x)
    (begin (if (fac bob #f #t) (set! x 1) (set! x 2)) x)))
 
-(let-label
- bob
- (lambda (x) x)
- ((fac bob (lambda (x) x) (lambda (x) 1)) 3))
+;(let-label
+; bob
+; (lambda (x) x)
+; ((fac bob (lambda (x) x) (lambda (x) 1)) 3))
 
 (module+ test
   (require rackunit)

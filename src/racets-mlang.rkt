@@ -1,3 +1,4 @@
+; Main macros implementing racets
 #lang racket
 
 (require "facets.rkt" (for-syntax "facets.rkt"))
@@ -6,33 +7,38 @@
 (require (for-syntax racket/set))
 (require racket/stxparam)
 
-(provide (except-out
-          (all-from-out racket)
-          with-continuation-mark
-          #%module-begin
-          #%plain-lambda
-          #%variable-reference
-          lambda
-          if
-          set!
-          #%app)
-         (rename-out
-          [fac-module-begin #%module-begin]
-          [fac-app #%app]
-          [fac-lambda #%plain-lambda]
-          [fac-lambda lambda]
-          [fac-if if]
-          [fac-set! set!]
-          [fac-var #%variable-reference]
-          [fac-continuation-mark with-continuation-mark])
-         let-label
-         fac)
+(provide 
+ ; Buit on Racket
+ (except-out
+  (all-from-out racket)
+  with-continuation-mark
+  #%module-begin
+  #%plain-lambda
+  lambda
+  if
+  set!
+  #%app)
+ ; Rename out our core forms
+ (rename-out
+  [fac-module-begin #%module-begin]
+  [fac-app #%app]
+  [fac-lambda #%plain-lambda]
+  [fac-lambda lambda]
+  [fac-if if]
+  [fac-set! set!]
+  [fac-continuation-mark with-continuation-mark])
+ ; Extra macros unique to racets
+ let-label
+ fac)
 
+; Labels are a name plus a lambda (contract) that implements them
 (struct labelpair (name con) #:transparent)
 
 ; The starting pc in the program
 (define current-pc (make-parameter (set)))
 
+; Lambdas are rewritten into tagged closures so we can implement
+; `racets` closures from primitives.
 (define-syntax-rule (fac-lambda xs expr)
   (fclo (lambda xs expr)))
 
@@ -40,14 +46,17 @@
 (define-syntax-rule (let-label l (lambda xs e) body)
   (let ([l (labelpair (gensym 'lab) (lambda xs e))]) body))
 
+; Construct a faceted value with a specific name and from values of
+; pos and neg branches
 (define (mkfacet name v1 v2)
   (construct-facet-optimized
    (set->list (set-add (current-pc) (pos name))) v1 v2))
 
-; Construct a facet
+; Syntax for facet construction
 (define-syntax-rule (fac l v1 v2)
   (mkfacet (labelpair-name l) v1 v2))
 
+; Incomplete
 (define-syntax-rule (obs l e1 e2)
   (let* ([v1 e1]
          [v2 e2]
@@ -66,9 +75,6 @@
 (define-syntax-rule (fac-set! id expr)
   (set! id
         (construct-facet-optimized (set->list (current-pc)) expr id)))
-
-(define-syntax-rule (fac-var stx)
-  (error "bad syntax"))
 
 ; If
 (define-syntax (fac-if stx)

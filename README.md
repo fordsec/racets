@@ -21,3 +21,11 @@ language, which uses similar concepts to Racets.
 Racets extends the Racket programming language to allow writing
 programs that compute with secret values. Racets does this by
 providing a `#lang` language built on top of Racket.
+
+# Codebase
+
+The main implemenation of the language lives in
+`src/racets-mlang.rkt`. It rewrites the core forms of fully-expanded
+Racket to implement faceted execution. `src/facets.rkt` contains a
+library of operations on facets that are used to construct and manage
+facets.
