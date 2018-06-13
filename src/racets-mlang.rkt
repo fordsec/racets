@@ -62,8 +62,8 @@
          [v2 e2]
          [contract-clo l])
     (if (facet? v2)
-        t
-        f)))
+        #t
+        #f)))
 
 (define-syntax (fac-module-begin stx)
   (syntax-case stx ()
@@ -107,21 +107,22 @@
 (define-syntax (fac-app stx)
   (syntax-case stx ()
     [(_ f a0 ...)
-     #`(if (facet? f)
+     #`(let ([func f])
+         (if (facet? func)
            (let* ([left
                    (parameterize ([current-pc
                                    (set-add (current-pc)
-                                            (pos (facet-label f)))])
-                     (#%app (facet-left f) a0 ...))]
+                                            (pos (facet-label func)))])
+                     (#%app (facet-left func) a0 ...))]
                   [right
                    (parameterize ([current-pc
                                    (set-add (current-pc)
-                                            (neg (facet-label f)))])
-                     (#%app (facet-right f) a0 ...))])
-             (mkfacet (facet-label f)
+                                            (neg (facet-label func)))])
+                     (#%app (facet-right func) a0 ...))])
+             (mkfacet (facet-label func)
                       left
                       right))
-           ((fclo-clo f) a0 ...))]))
+           ((fclo-clo func) a0 ...)))]))
 
 ;; Here's a version we're playing around with, but it's broken..
 ;; (define-syntax (fac-app stx)
