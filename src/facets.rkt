@@ -11,6 +11,9 @@
 ; Facets
 (struct facet (label left right) #:transparent)
 
+; Labels are a name plus a lambda (policy) that implements them
+(struct labelpair (name pol) #:transparent)
+
 ; Tagged faceted closures
 (struct fclo (clo))
 
@@ -33,45 +36,50 @@
 (define (construct-facet-optimized pc v default-value)
   (define (head v)
     (match v
-      [(list (pos k) _) k]
-      [(list (neg k) _) k]
-      [(facet k _ _) k]
+      [(list (pos (labelpair k _)) _) k]
+      [(list (neg (labelpair k _)) _) k]
+      [(facet (labelpair k _) _ _) k]
       [else '∞]))
   (match (list pc v default-value)
     [(list '() _ _) v]
-    [(list (cons (pos k) rst) (facet k va vb) (facet k vc vd)) 
-     (facet k (construct-facet-optimized rst va vc) vd)]
-    [(list (cons (neg k) rst) (facet k va vb) (facet k vc vd))
-     (facet k vc (construct-facet-optimized rst vb vd))]
-    [(list pc (facet k va vb) (facet k vc vd))
+    [(list (cons (pos (labelpair k p)) rst) (facet (labelpair k p) va vb)
+           (facet (labelpair k p) vc vd))
+     (facet (labelpair k p) (construct-facet-optimized rst va vc) vd)]
+    [(list (cons (neg (labelpair k p)) rst) (facet (labelpair k p) va vb)
+           (facet (labelpair k p) vc vd))
+     (facet (labelpair k p) vc (construct-facet-optimized rst vb vd))]
+    [(list pc (facet (labelpair k p) va vb) (facet (labelpair k p) vc vd))
      #:when (label<? k (head pc))
-     (facet k (construct-facet-optimized pc va vc)
+     (facet (labelpair k p)
+            (construct-facet-optimized pc va vc)
             (construct-facet-optimized pc vb vd))]
-    [(list (cons (pos k) rst) (facet k va vb) vo)
+    [(list (cons (pos (labelpair k p)) rst) (facet (labelpair k p) va vb) vo)
      #:when (label<? k (head vo))
-     (facet k (construct-facet-optimized rst va vo) vo)]
-    [(list (cons (neg k) rst) (facet k va vb) vo)
+     (facet (labelpair k p) (construct-facet-optimized rst va vo) vo)]
+    [(list (cons (neg (labelpair k p)) rst) (facet (labelpair k p) va vb) vo)
      #:when (label<? k (head vo))
-     (facet k vo (construct-facet-optimized rst vb vo))]
-    [(list (cons (pos k) rst) vn (facet k va vb))
+     (facet (labelpair k p) vo (construct-facet-optimized rst vb vo))]
+    [(list (cons (pos (labelpair k p)) rst) vn (facet (labelpair k p) va vb))
      #:when (label<? k (head vn))
-     (facet k (construct-facet-optimized rst vn va) vb)]
-    [(list (cons (neg k) rst) vn (facet k va vb))
+     (facet (labelpair k p) (construct-facet-optimized rst vn va) vb)]
+    [(list (cons (neg (labelpair k p)) rst) vn (facet (labelpair k p) va vb))
      #:when (label<? k (head vn))
-     (facet k va (construct-facet-optimized rst vn vb))]
-    [(list (cons (pos k) rst) vn vo)
+     (facet (labelpair k p) va (construct-facet-optimized rst vn vb))]
+    [(list (cons (pos (labelpair k p)) rst) vn vo)
      #:when (and (label<? k (head vn)) (label<? k (head vo)))
-     (facet k (construct-facet-optimized rst vn vo) vo)]
-    [(list (cons (neg k) rst) vn vo)
+     (facet (labelpair k p) (construct-facet-optimized rst vn vo) vo)]
+    [(list (cons (neg (labelpair k p)) rst) vn vo)
      #:when (and (label<? k (head vn)) (label<? k (head vo)))
-     (facet k vo (construct-facet-optimized rst vn vo))]
-    [(list pc (facet k va vb) vo)
+     (facet (labelpair k p) vo (construct-facet-optimized rst vn vo))]
+    [(list pc (facet (labelpair k p) va vb) vo)
      #:when (and (label<? k (head vo)) (label<? k (head pc)))
-     (facet k (construct-facet-optimized pc va vo)
+     (facet (labelpair k p)
+            (construct-facet-optimized pc va vo)
             (construct-facet-optimized pc vb vo))]
-    [(list pc vn (facet k va vb))
+    [(list pc vn (facet (labelpair k p) va vb))
      #:when (and (label<? k (head vn)) (label<? k (head pc)))
-     (facet k (construct-facet-optimized pc vn va)
+     (facet (labelpair k p)
+            (construct-facet-optimized pc vn va)
             (construct-facet-optimized pc vn vb))]))
 
 (define ((facet-fmap* f) . fvs)

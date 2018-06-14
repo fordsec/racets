@@ -13,8 +13,8 @@
   (all-from-out racket)
   with-continuation-mark
   #%module-begin
-  #%plain-lambda
-  lambda
+;  #%plain-lambda
+;  lambda
   if
   set!
   #%app)
@@ -22,25 +22,32 @@
  (rename-out
   [fac-module-begin #%module-begin]
   [fac-app #%app]
-  [fac-lambda #%plain-lambda]
-  [fac-lambda lambda]
+;  [fac-lambda #%plain-lambda]
+;  [fac-lambda lambda]
   [fac-if if]
   [fac-set! set!]
   [fac-continuation-mark with-continuation-mark])
- ; Extra macros unique to racets
- let-label
- fac)
 
-; Labels are a name plus a lambda (contract) that implements them
-(struct labelpair (name con) #:transparent)
+ ; 
+ ; Extra macros unique to racets
+ ; 
+
+ ; Associate a label with a policy
+ let-label
+ 
+ ; Create a facet
+ fac
+ 
+ ; Observe a faceted value
+ obs)
 
 ; The starting pc in the program
 (define current-pc (make-parameter (set)))
 
 ; Lambdas are rewritten into tagged closures so we can implement
 ; `racets` closures from primitives.
-(define-syntax-rule (fac-lambda xs expr)
-  (fclo (lambda xs expr)))
+; (define-syntax-rule (fac-lambda xs expr)
+;  (fclo (lambda xs expr)))
 
 ; Probably not quite what we want...
 (define-syntax-rule (let-label l (lambda xs e) body)
@@ -54,16 +61,30 @@
 
 ; Syntax for facet construction
 (define-syntax-rule (fac l v1 v2)
-  (mkfacet (labelpair-name l) v1 v2))
+  (mkfacet l v1 v2))
 
-; Incomplete
+; Observe l e1 e2
+; l - The label being checked
+; e1 - The argument being passed to the policy 
 (define-syntax-rule (obs l e1 e2)
   (let* ([v1 e1]
          [v2 e2]
-         [contract-clo l])
+         [policy l])
     (if (facet? v2)
-        #t
-        #f)))
+        ; equal?
+        (if (equal? (facet-label v2) policy)
+            ; Evaluate the contract
+            (if ((labelpair-pol policy) v1)
+                ; If true, return left side of facet
+                (facet-left v2)
+                ; If false, return right side of facet
+                (facet-right v2))
+            ; Otherwise, evaluate left and right side, then make a
+            ; facet of them both.
+            ; Zhanpeng: try to implement this yourself over the next
+            ; day or two
+            (void))
+        v2)))
 
 (define-syntax (fac-module-begin stx)
   (syntax-case stx ()
@@ -102,8 +123,8 @@
                   (mkfacet (facet-label gv) left right))])
              (if gv et ef)))]))
 
-; Faceted application.
-; Very broken for builtins
+; Faceted application
+; Broken for builtins.
 (define-syntax (fac-app stx)
   (syntax-case stx ()
     [(_ f a0 ...)
@@ -122,31 +143,9 @@
              (mkfacet (facet-label func)
                       left
                       right))
-           ((fclo-clo func) a0 ...)))]))
+           (func a0 ...)))]))
 
-;; Here's a version we're playing around with, but it's broken..
-;; (define-syntax (fac-app stx)
-;;   (syntax-case stx ()
-;;     [(_ f a0 ...)
-;;      #`(if (facet? f)
-;;            (let* ([real-args (if (fclo? f)
-;;                                  (list a0 ...)
-;;                                  (error "unimplemented"))]
-;;                   [real-clo (if (fclo? f) (fclo-clo f) f)]
-;;                   [left
-;;                    (parameterize ([current-pc
-;;                                    (set-add (current-pc)
-;;                                             (pos (facet-label f)))])
-;;                      (apply real-clo real-args))]
-;;                   [right
-;;                    (parameterize ([current-pc
-;;                                    (set-add (current-pc)
-;;                                             (neg (facet-label f)))])
-;;                      (apply real-clo real-args))])
-;;              (facet (facet-label f)
-;;                     left
-;;                     right))
-;;            ((fclo-clo f) a0 ...))]))
-
+; Not sure what to do with continuations, we will have to handle other
+; continuation-based stuff, too, eventually.
 (define-syntax (fac-continuation-mark stx)
   (wrong-syntax stx "continuation marks are currently unsupported in racets"))
