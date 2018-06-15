@@ -8,6 +8,7 @@
   ; A few test contracts
   (define con1 (let-label con1 (lambda (x) x) con1))
   (define con2 (let-label con1 (lambda (x) (not x)) con1))
+  (define con3 (let-label con2 (lambda (x) (x)) con2))
 
   ;
   ; Tests for basic function application
@@ -16,7 +17,7 @@
   ; Should be (fac con1 3 1)
   (check-equal?
    ((fac con1 (lambda (x) x) (lambda (x) 1)) 3)
-   (fac con1 3 1))
+   (fac con1 3 1) "It should return (fac con1 3 1)")
   
   ;
   ; Tests for set!
@@ -26,7 +27,13 @@
   (check-equal?
    (let ([x 0])
      (begin (if (fac con1 #f #t) (set! x 1) (set! x 2)) x))
-   (fac con1 2 1))
+   (fac con1 2 1) "It should return (fac con1 2 1)")
+
+  ; Should be (fac con1 1 2)
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #t #f) (set! x 1) (set! x 2)) x))
+   (fac con1 1 2) "It should return (fac con1 1 2)")
 
   ; 
   ; Tests for builtins
@@ -41,6 +48,9 @@
   (check-equal?
    (obs con1 #t (+ 1 2)) 3)
 
+  (check-equal?
+   (obs con1 #f (+ 1 2)) 3)
+  
   (check-equal? 
    (obs con1 #t (fac con1 1 2))
    1)
@@ -48,7 +58,8 @@
   (check-equal? 
    (obs con1 #f (fac con1 1 2))
    2)
-  
+
+  ; Should it be (fac con2 1 2) instead of (fac con1 1 2)?
   (check-equal?
    (obs con2 #t (fac con1 1 2))
    (fac con1 1 2))
@@ -63,6 +74,8 @@
    (obs con2 #t (fac con1 (fac con2 1 2) (fac con2 3 4)))
    (fac con1 2 4))
 
+  ; (display (obs con1 #t (fac con1 (fac con2 1 2) (fac con2 3 4))))
+  
   (check-equal?
    (obs con2 #t (obs con1 #t (fac con1 (fac con2 1 2) (fac con2 3 4))))
    2))

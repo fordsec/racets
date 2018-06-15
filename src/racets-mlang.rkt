@@ -83,7 +83,9 @@
             ; facet of them both.
             ; Zhanpeng: try to implement this yourself over the next
             ; day or two
-            (void))
+            (let* ([v2-l (facet-left v2)]
+                   [v2-r (facet-right v2)])
+              (fac policy v2-l v2-r)))
         v2)))
 
 (define-syntax (fac-module-begin stx)
