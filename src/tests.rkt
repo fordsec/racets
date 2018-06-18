@@ -8,7 +8,7 @@
   ; A few test contracts
   (define con1 (let-label con1 (lambda (x) x) con1))
   (define con2 (let-label con1 (lambda (x) (not x)) con1))
-  (define con3 (let-label con2 (lambda (x) (x)) con2))
+  (define con0 (let-label con2 (lambda (x) (x)) con2))
 
   ;
   ; Tests for basic function application
@@ -18,6 +18,16 @@
   (check-equal?
    ((fac con1 (lambda (x) x) (lambda (x) 1)) 3)
    (fac con1 3 1) "It should return (fac con1 3 1)")
+
+  ; Should be (fac con1 6 9)
+  (check-equal?
+   ((fac con1 (lambda (x) (+ x x)) (lambda (x) (* x x))) 3)
+   (fac con1 6 9) "It should return (fac con1 6 9)")
+
+  ; Should be (fac con2 5 6)
+  (check-equal?
+   ((fac con2 (lambda (x y) (+ x y)) (lambda (x y) (* x y))) 3 2)
+   (fac con2 5 6) "It should return (fac con2 5 6)")
   
   ;
   ; Tests for set!
@@ -35,6 +45,30 @@
      (begin (if (fac con1 #t #f) (set! x 1) (set! x 2)) x))
    (fac con1 1 2) "It should return (fac con1 1 2)")
 
+  ; Should be (fac con1 1 1)
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #t #t) (set! x 1) (set! x 2)) x))
+   (fac con1 1 1) "It should return (fac con1 1 1)")
+
+  ; Should be (fac con1 2 2)
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #f) (set! x 1) (set! x 2)) x))
+   (fac con1 2 2) "It should return (fac con1 2 2)")
+
+  ;
+  ; !!!This test case is weird!!!
+  ; Run it several times, and we get different returned value.
+  ;
+  (check-equal?
+   (let* ([x #t])
+     (begin (if (fac con1 (fac con2 #t #f) (fac con2 #t #f))
+                (set! x #f)
+                (set! x 1)) x))
+   (fac con1 (fac con2 #f (fac con1 1 1)) (fac con2 #f (fac con1 #t 1))) ; this is not correct I think.
+   )
+  
   ; 
   ; Tests for builtins
   ; 
@@ -78,7 +112,13 @@
   
   (check-equal?
    (obs con2 #t (obs con1 #t (fac con1 (fac con2 1 2) (fac con2 3 4))))
-   2))
+   2)
+
+  (check-equal?
+   (obs con1 #t (fac con0 (fac con1 (fac con2 1 2) (fac con2 3 4)) (fac con1 (fac con2 5 6) (fac con2 7 8))))
+   (fac con0 (fac con2 1 2) (fac con2 5 6)) "Should be (fac con0 (fac con2 1 2) (fac con2 5 6))"))
+
+
 
   ;(check-equal?
   ; ((fac 'bob + -) 3);
