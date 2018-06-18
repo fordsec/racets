@@ -28,6 +28,11 @@
   (check-equal?
    ((fac con2 (lambda (x y) (+ x y)) (lambda (x y) (* x y))) 3 2)
    (fac con2 5 6) "It should return (fac con2 5 6)")
+
+  ; Should be (fac con2 4 4)
+  (check-equal?
+   ((fac con2 (lambda (x) ((lambda (y) (+ x y)) 2)) (lambda (x) (* x x))) 2)
+   (fac con2 4 4) "It should return (fac con2 4 4)")
   
   ;
   ; Tests for set!
@@ -59,7 +64,7 @@
 
   ;
   ; !!!This test case is weird!!!
-  ; Run it several times, and we get different returned value.
+  ; Run it several times, and we get different returned values.
   ;
   (check-equal?
    (let* ([x #t])
@@ -116,10 +121,61 @@
 
   (check-equal?
    (obs con1 #t (fac con0 (fac con1 (fac con2 1 2) (fac con2 3 4)) (fac con1 (fac con2 5 6) (fac con2 7 8))))
-   (fac con0 (fac con2 1 2) (fac con2 5 6)) "Should be (fac con0 (fac con2 1 2) (fac con2 5 6))"))
+   (fac con0 (fac con2 1 2) (fac con2 5 6)) "Should be (fac con0 (fac con2 1 2) (fac con2 5 6))")
 
+  ;
+  ; Some combined test cases for set!, app, if, obs
+  ;
+  
+  ; Test case that combines obs and app.
+  (check-equal?
+   (obs con2 #t ((fac con2 (lambda (x) ((lambda (y) (+ x y)) 2)) (lambda (x) (* x x))) 2))
+   4 "It should return 4")
 
+  ; Test case that combines app, set! and if.
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t) (set! x (lambda (y) (+ y y))) (set! x (lambda (y) (* y y)))) (x 3)))
+   (fac con1 9 6) "It should return (fac con1 9 6)")
+
+  ; Test case that combines obs, set!, and if.
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t) (set! x 1) (set! x 2)) (obs con1 #t x)))
+   2 "It should return 2")
+
+  ; Test case that combines obs, set!, app and if.
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t) (set! x (lambda (y) (+ y y))) (set! x (lambda (y) (* y y)))) ((obs con1 #t x) 3)))
+   9 "It should return 9")
+
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #t #f) (set! x (lambda (y) (+ y y))) (set! x (lambda (y) (* y y)))) ((obs con1 #t x) 3)))
+   6 "It should return 6")
+
+  ; A complicated test case that involves app, set, obs, and if
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t)
+                (set! x (fac con2 (lambda (x) (+ x x)) (lambda (x) (* x x x))))
+                (set! x (fac con2 (lambda (x) (- x x x)) (lambda (x) (* x x)))))
+            ((obs con1 #t (obs con1 #f x)) 2)))
+   (fac con1 4 8) "It should return (fac con1 4 8)")
+
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t)
+                (set! x (fac con2 (lambda (x) (+ x x)) (lambda (x) (* x x x))))
+                (set! x (fac con2 (lambda (x) (- x x x)) (lambda (x) (* x x)))))
+            ((obs con1 #f (obs con1 #t x)) 2)))
+   (fac con1 -2 4) "It should return (fac con1 -2 4)")
+  
+  )
 
   ;(check-equal?
   ; ((fac 'bob + -) 3);
   ;(fac 'bob 3 -3))
+
+
