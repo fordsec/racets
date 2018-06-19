@@ -144,7 +144,7 @@
      (begin (if (fac con1 #f #t) (set! x 1) (set! x 2)) (obs con1 #t x)))
    2 "It should return 2")
 
-  ; Test case that combines obs, set!, app and if.
+  ; Test cases that combine obs, set!, app and if.
   (check-equal?
    (let ([x 0])
      (begin (if (fac con1 #f #t) (set! x (lambda (y) (+ y y))) (set! x (lambda (y) (* y y)))) ((obs con1 #t x) 3)))
@@ -171,11 +171,14 @@
                 (set! x (fac con2 (lambda (x) (- x x x)) (lambda (x) (* x x)))))
             ((obs con1 #f (obs con1 #t x)) 2)))
    (fac con1 -2 4) "It should return (fac con1 -2 4)")
-  
-  )
 
-  ;(check-equal?
-  ; ((fac 'bob + -) 3);
-  ;(fac 'bob 3 -3))
+  (check-equal?
+   (let ([x 0])
+     (begin (if (fac con1 #f #t)
+                (set! x (fac con2 (lambda (x) ((lambda (y) (+ x y)) x)) (lambda (x) ((lambda (y) (* x y)) x))))
+                (set! x (fac con2 (lambda (x) (- x x x)) (lambda (x) (* x x x)))))
+            ((obs con1 #t (obs con1 #f x)) 3)))
+   (fac con1 6 9) "It should return (fac con1 6 9)")
+  )
 
 
