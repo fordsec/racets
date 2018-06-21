@@ -49,44 +49,42 @@
 ; (define-syntax-rule (fac-lambda xs expr)
 ;  (fclo (lambda xs expr)))
 
-; Probably not quite what we want...
 (define-syntax-rule (let-label l (lambda xs e) body)
-  (let ([l (labelpair (gensym 'lab) (lambda xs e))]) body))
+  (let ([l (labelpair (gensym 'lab)
+                      (lambda xs e))])
+    body))
 
 ; Construct a faceted value with a specific name and from values of
 ; pos and neg branches
 (define (mkfacet name v1 v2)
   (construct-facet-optimized
-   (set->list (set-add (current-pc) (pos name))) v1 v2))
+   (set->list (set-add (current-pc) (pos name)))
+   v1
+   v2))
 
 ; Syntax for facet construction
 (define-syntax-rule (fac l v1 v2)
-  (mkfacet l v1 v2))
+  (mkfacet (labelpair-name l) v1 v2))
 
 ; Observe l e1 e2
 ; l - The label being checked
 ; e1 - The argument being passed to the policy 
 (define-syntax-rule (obs l e1 e2)
-  (let* ([v1 e1]
-         [v2 e2]
-         [policy l])
-    (if (facet? v2)
-        ; equal?
-        (if (equal? (facet-label v2) policy)
-            ; Evaluate the contract
-            (if ((labelpair-pol policy) v1)
-                ; If true, return left side of facet
-                (facet-left v2)
-                ; If false, return right side of facet
-                (facet-right v2))
-            ; Otherwise, evaluate left and right side, then make a
-            ; facet of them both.
-            ; Zhanpeng: try to implement this yourself over the next
-            ; day or two
-            (let* ([v2-l (facet-left v2)]
-                   [v2-r (facet-right v2)])
-              (fac policy v2-l v2-r)))
-        v2)))
+  (let obsf ([lp l]
+             [v1 e1] ;; TODO: should e1 be reevaluated?
+             [v2 e2])
+      (if (facet? v2)
+          (let ([v2-name (facet-labelname v2)])
+            (if (equal? v2-name (labelpair-name lp))
+              (if ((labelpair-pol lp) v1)
+                  (facet-left v2)
+                  (facet-right v2))
+              (let* ([v2-l (facet-left v2)]
+                     [v2-r (facet-right v2)])
+                (facet v2-name
+                       (obsf lp v1 v2-l)
+                       (obsf lp v1 v2-r)))))
+          v2)))
 
 (define-syntax (fac-module-begin stx)
   (syntax-case stx ()
@@ -103,26 +101,26 @@
 (define-syntax (fac-if stx)
   (syntax-case stx ()
     [(_ guard et ef)
-     #`(let loop ([gv guard])
+     #`(let iff ([gv guard])
          (if (facet? gv)
              (cond
-               [(set-member? (current-pc) (pos (facet-label gv)))
-                (loop (facet-left gv))]
-               [(set-member? (current-pc) (neg (facet-label gv)))
-                (loop (facet-right gv))]
+               [(set-member? (current-pc) (pos (facet-labelname gv)))
+                (iff (facet-left gv))]
+               [(set-member? (current-pc) (neg (facet-labelname gv)))
+                (iff (facet-right gv))]
                [else
                 (let*
                     ([left
                       (parameterize ([current-pc (set-add (current-pc)
                                                           (pos
-                                                           (facet-label gv)))])
-                        (loop (facet-left gv)))]
+                                                           (facet-labelname gv)))])
+                        (iff (facet-left gv)))]
                      [right
                       (parameterize ([current-pc (set-add (current-pc)
                                                           (neg
-                                                           (facet-label gv)))])
-                        (loop (facet-right gv)))])
-                  (mkfacet (facet-label gv) left right))])
+                                                           (facet-labelname gv)))])
+                        (iff (facet-right gv)))])
+                  (mkfacet (facet-labelname gv) left right))])
              (if gv et ef)))]))
 
 ; Faceted application
@@ -135,14 +133,14 @@
            (let* ([left
                    (parameterize ([current-pc
                                    (set-add (current-pc)
-                                            (pos (facet-label func)))])
+                                            (pos (facet-labelname func)))])
                      (#%app (facet-left func) a0 ...))]
                   [right
                    (parameterize ([current-pc
                                    (set-add (current-pc)
-                                            (neg (facet-label func)))])
+                                            (neg (facet-labelname func)))])
                      (#%app (facet-right func) a0 ...))])
-             (mkfacet (facet-label func)
+             (mkfacet (facet-labelname func)
                       left
                       right))
            (func a0 ...)))]))
