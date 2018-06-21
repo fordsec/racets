@@ -62,10 +62,7 @@
      (begin (if (fac con1 #f #f) (set! x 1) (set! x 2)) x))
    (fac con1 2 2) "It should return (fac con1 2 2)")
 
-  ;
-  ; !!!This test case is weird!!!
-  ; Run it several times, and we get different returned values.
-  ;
+  ; Should be (fac con1 (fac con2 #f 1) (fac con2 #f 1))
   #;
   (check-equal?
    (let* ([x (ref #t)])
@@ -74,6 +71,36 @@
                 (ref-set! x 1))
             (deref x)))
    (fac con1 (fac con2 #f 1) (fac con2 #f 1))) ; this is correct I think :)
+
+  ;
+  ; Tests for ref, ref-set!, deref
+  ;
+  #;
+  (check-equal?
+   (let ([x (ref 0)])
+    (deref x))
+   0)
+
+  #;
+  (check-equal?
+   (deref (ref 2))
+   2)
+
+  #;
+  (check-equal?
+   (let ([x (ref 2)])
+     (begin (if (fac con1 #t #f)
+                (ref-set! x 2)
+                (ref-set! x 1))
+            (obs con1 #t (deref x))))
+   2 "It should return 2.")
+
+  #;
+  (check-equal?
+   (let ([x (ref 2)])
+     (ref-set! x 3)
+     (deref x))
+   3 "It should return 3.")
   
   ; 
   ; Tests for builtins

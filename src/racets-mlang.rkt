@@ -123,6 +123,27 @@
                   (mkfacet (facet-labelname gv) left right))])
              (if gv et ef)))]))
 
+; ref
+; TODO: incorporate faceted value
+(define-syntax (ref stx)
+  (syntax-case stx ()
+    [(_ var)
+     #`(box var)]))
+
+; ref-set!
+; TODO: incorporate faceted value
+(define-syntax (ref-set! stx)
+  (syntax-case stx ()
+    [(_ var value)
+     #`(set-box! var value)]))
+
+; deref
+; TODO: incorporate faceted value
+(define-syntax (deref stx)
+  (syntax-case stx ()
+    [(_ var)
+     #`(unbox var)]))
+
 ; Faceted application
 ; Broken for builtins.
 (define-syntax (fac-app stx)
