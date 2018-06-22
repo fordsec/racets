@@ -146,8 +146,22 @@
 ; ref-set!
 (define-syntax (ref-set! stx)
   (syntax-case stx ()
-    [(_ var value)
-     #`(set-box! var value)]))
+    [(_ var e)
+     #`(let ([value e])
+         (let setf ([var var]
+                    [pc (current-pc)])
+           (if (box? var)
+               ; if var is a facet value
+               (set-box! var (construct-facet-optimized (set->list (current-pc)) value (unbox var)))
+               ; else
+               (mkfacet
+                (facet-labelname var)
+                (setf
+                 (facet-left var)
+                 (set-add pc (pos (facet-labelname var))))
+                (setf
+                 (facet-right var)
+                 (set-add pc (neg (facet-labelname var))))))))]))
 
 ; deref
 (define-syntax (deref stx)
