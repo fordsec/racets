@@ -139,7 +139,7 @@
      #`(let ([var vr]) ; let-bind vr to evaluate
          (if (facet? var)
              ; if var is a facet,
-             (construct-facet-optimized (set->list (current-pc)) var 0)
+             (box (construct-facet-optimized (set->list (current-pc)) var 0))
              ; else
              (box var)))]))
 
@@ -153,7 +153,7 @@
 (define-syntax (deref stx)
   (syntax-case stx ()
     [(_ vr)
-     #`(let dereff ([var vr])
+     #`(let dereff ([var (unbox vr)])
          (if (facet? var)
              ; if var is a facet value
              (cond
@@ -164,7 +164,7 @@
                [else
                 (mkfacet (facet-labelname var) (dereff (facet-left var)) (dereff (facet-right var)))])
              ; else
-             (unbox var)))]))
+             var))]))
 
 ; Faceted application
 ; Broken for builtins.
