@@ -124,25 +124,38 @@
              (if gv et ef)))]))
 
 ; ref
-; TODO: incorporate faceted value
 (define-syntax (ref stx)
   (syntax-case stx ()
-    [(_ var)
-     #`(box var)]))
+    [(_ vr)
+     #`(let ([var vr]) ; let-bind vr to evaluate
+         (if (facet? var)
+             ; if var is a facet,
+             (construct-facet-optimized (set->list (current-pc)) var 0)
+             ; else
+             (box var)))]))
 
 ; ref-set!
-; TODO: incorporate faceted value
 (define-syntax (ref-set! stx)
   (syntax-case stx ()
     [(_ var value)
      #`(set-box! var value)]))
 
 ; deref
-; TODO: incorporate faceted value
 (define-syntax (deref stx)
   (syntax-case stx ()
-    [(_ var)
-     #`(unbox var)]))
+    [(_ vr)
+     #`(let dereff ([var vr])
+         (if (facet? var)
+             ; if var is a facet value
+             (cond
+               [(set-member? (current-pc) (pos (facet-labelname var)))
+                (dereff (facet-left var))]
+               [(set-member? (current-pc) (neg (facet-labelname var)))
+                (dereff (facet-right var))]
+               [else
+                (mkfacet (facet-labelname var) (dereff (facet-left var)) (dereff (facet-right var)))])
+             ; else
+             (unbox var)))]))
 
 ; Faceted application
 ; Broken for builtins.
