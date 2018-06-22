@@ -101,11 +101,6 @@
        #`(#%plain-module-begin
           body ...)]))
 
-; set!
-(define-syntax-rule (fac-set! id expr)
-  (set! id
-        (construct-facet-optimized (set->list (current-pc)) expr id)))
-
 ; If
 (define-syntax (fac-if stx)
   (syntax-case stx ()
