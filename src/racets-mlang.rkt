@@ -39,7 +39,16 @@
  fac
  
  ; Observe a faceted value
- obs)
+ obs
+
+ ; Create a reference cell
+ ref
+
+ ; dereference a reference cell
+ deref
+
+ ; mutate a reference cell
+ ref-set!)
 
 ; The starting pc in the program
 (define current-pc (make-parameter (set)))
