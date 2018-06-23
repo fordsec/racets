@@ -92,6 +92,14 @@
      (ref-set! x 3)
      (deref x))
    3 "It should return 3.")
+
+  (check-equal?
+   (let* ([x (ref 1)]
+          [y (ref 0)]
+          [z (ref (fac con1 x y))])
+     (ref-set! z 2)
+     (obs con1 #t (deref z)))
+   2 "It should return 2")
   
   ; 
   ; Tests for builtins
@@ -187,7 +195,6 @@
    6 "It should return 6")
 
   ; A complicated test case that involves app, set, obs, and if
-  #;
   (check-equal?
    (let ([x (ref 0)])
      (begin (if (fac con1 #f #t)
