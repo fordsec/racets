@@ -25,7 +25,7 @@
 ;  [fac-lambda #%plain-lambda]
 ;  [fac-lambda lambda]
   [fac-if if]
-  [fac-set! set!]
+  [ref-set! set!]
   [fac-continuation-mark with-continuation-mark])
 
  ; 
@@ -48,7 +48,8 @@
  deref
 
  ; mutate a reference cell
- ref-set!)
+ ref-set!
+ )
 
 ; The starting pc in the program
 (define current-pc (make-parameter (set)))
