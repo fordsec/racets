@@ -22,37 +22,28 @@
   (match (cons l1 l2)
     [(cons '∞ _) #f]
     [(cons '∞ '∞) #f]
-    [(cons '∞ _) #t]
-    [else
-     (if (void? l1)
-         l2
-         (if (void? l2)
-             l1
-             (symbol<? l1 l2)))]))
+    [(cons _ '∞) #t]
+    [else (symbol<? l1 l2)]))
 
 ; Optimized facet construction ala Austin. This follows (nearly
 ; exactly) the formulation in Austin et al.'s optimized facet
 ; construction: Figure 6 in their paper.
-; TODO: look at this, it appears to be wrong
 (define (construct-facet-optimized pc v default-value)
   (define (head v)
     (match v
-      [(list (pos k) _) k]
-      [(list (neg k) _) k]
+      [(cons (pos k) _) k]
+      [(cons (neg k) _) k]
       [(facet k _ _) k]
       [else '∞]))
   (match (list pc v default-value)
     [(list '() _ _) v]
-    [(list (cons (pos k) rst) (facet k va vb)
-           (facet k vc vd))
+    [(list (cons (pos k) rst) (facet k va vb) (facet k vc vd)) 
      (facet k (construct-facet-optimized rst va vc) vd)]
-    [(list (cons (neg k) rst) (facet k va vb)
-           (facet k vc vd))
+    [(list (cons (neg k) rst) (facet k va vb) (facet k vc vd))
      (facet k vc (construct-facet-optimized rst vb vd))]
     [(list pc (facet k va vb) (facet k vc vd))
      #:when (label<? k (head pc))
-     (facet k
-            (construct-facet-optimized pc va vc)
+     (facet k (construct-facet-optimized pc va vc)
             (construct-facet-optimized pc vb vd))]
     [(list (cons (pos k) rst) (facet k va vb) vo)
      #:when (label<? k (head vo))
@@ -74,13 +65,11 @@
      (facet k vo (construct-facet-optimized rst vn vo))]
     [(list pc (facet k va vb) vo)
      #:when (and (label<? k (head vo)) (label<? k (head pc)))
-     (facet k
-            (construct-facet-optimized pc va vo)
+     (facet k (construct-facet-optimized pc va vo)
             (construct-facet-optimized pc vb vo))]
     [(list pc vn (facet k va vb))
      #:when (and (label<? k (head vn)) (label<? k (head pc)))
-     (facet k
-            (construct-facet-optimized pc vn va)
+     (facet k (construct-facet-optimized pc vn va)
             (construct-facet-optimized pc vn vb))]))
 
 (define ((facet-fmap* f) . fvs)

@@ -16,7 +16,6 @@
 ;  #%plain-lambda
 ;  lambda
   if
-  set!
   #%app)
  ; Rename out our core forms
  (rename-out
@@ -25,7 +24,6 @@
 ;  [fac-lambda #%plain-lambda]
 ;  [fac-lambda lambda]
   [fac-if if]
-  [fac-set! set!]
   [fac-continuation-mark with-continuation-mark])
 
  ; 
