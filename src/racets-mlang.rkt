@@ -155,12 +155,12 @@
                (set-box! var (construct-facet-optimized (set->list (current-pc)) value (unbox var)))
                ; else
                (mkfacet
-                (facet-labelname var)
+                (facet-labelname (unbox var))
                 (setf
-                 (facet-left var)
+                 (facet-left (unbox var))
                  (set-add pc (pos (facet-labelname var))))
                 (setf
-                 (facet-right var)
+                 (facet-right (unbox var))
                  (set-add pc (neg (facet-labelname var))))))))]))
 
 ; deref
