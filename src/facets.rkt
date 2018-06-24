@@ -80,7 +80,7 @@
 	                              [v (facet l v v)])
 		        fvs)]
 	     [lvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
-	     [rvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
+	     [rvs (map (match-lambda [(facet _ _ rv) rv]) fvs+)]
 	     [lv (apply (facet-fmap* f) lvs)]
 	     [rv (apply (facet-fmap* f) rvs)])
         (facet l lv rv))
