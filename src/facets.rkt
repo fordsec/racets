@@ -17,6 +17,9 @@
 ; Tagged faceted closures
 (struct fclo (clo))
 
+; faceted lambda closures
+(struct facet-\lambda (clo) #:transparent)
+
 ; Label comparison
 (define (label<? l1 l2)
   (match (cons l1 l2)
