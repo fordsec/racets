@@ -110,7 +110,7 @@
             (deref x)))
    (fac con1 (fac con2 1 2) 3) "It should return (fac con1 (fac con2 1 2) 3).")
 
-  ; a seem-to-be-trivial test case that involves multiple levels of if-else conditional clause
+  ; a seem-to-be-trivial test case that involves multiple levels of if-else conditional clause to test its robustness
   (check-equal?
    (let ([x (ref 123)])
      (begin (if (fac con1 #t #f)
@@ -142,14 +142,117 @@
      (obs con1 #t (deref z)))
    2 "It should return 2")
 
-  
-  
   ; 
   ; Tests for builtins
   ; 
   (check-equal?
    ((fac con1 + -) 3)
    (fac con1 3 -3))
+
+  ; Test cases for built-in +
+  (check-equal?
+   (+ (fac con0 2 0) (fac con1 1 0))
+   (fac con0 (fac con1 3 2) (fac con1 1 0))
+   "It should return (fac con0 (fac con1 3 2) (fac con1 1 0))")
+
+  (check-equal?
+   (+ (fac con0 2 1))
+   (fac con0 2 1))
+  
+  (check-equal?
+   (+ (fac con1 (fac con2 0 1) (fac con2 2 3)) (fac con0 (fac con2 4 5) (fac con2 6 7)))
+   (fac con1
+        (fac con0
+             (fac con2 4 6)
+             (fac con2 6 8))
+        (fac con0
+             (fac con2 6 8)
+             (fac con2 8 10))))
+
+  (check-equal?
+   (+ (fac con1 0 1) 1)
+   (fac con1 1 2))
+  
+  (check-equal?
+   (+ (fac con0 1 0) (+ (fac con1 2 3) (+ (fac con2 4 5) (fac con3 6 7))))
+   (fac con0
+        (fac con1
+             (fac con2
+                  (fac con3 13 14)
+                  (fac con3 14 15))
+             (fac con2
+                  (fac con3 14 15)
+                  (fac con3 15 16)))
+        (fac con1
+             (fac con2
+                  (fac con3 12 13)
+                  (fac con3 13 14))
+             (fac con2
+                  (fac con3 13 14)
+                  (fac con3 14 15)))))
+
+  ; Test cases for built-in -
+  (check-equal?
+   (- (fac con0 1 2))
+   (fac con0 -1 -2))
+
+  (check-equal?
+   (- (fac con0 4 5) (fac con1 3 2))
+   (fac con0 (fac con1 1 2) (fac con1 2 3)))
+
+  (check-equal?
+   (- (fac con0 (fac con1 10 9) (fac con1 8 7)) (fac con0 (fac con1 1 2) (fac con1 3 4)))
+   (fac con0 (fac con1 9 7) (fac con1 5 3)))
+
+  (check-equal?
+   (- (fac con0 (fac con1 9 8) (fac con2 7 6)))
+   (fac con0 (fac con1 -9 -8) (fac con2 -7 -6)))
+
+  ; !!!Is this test case correct? Need review!!!
+  (check-equal?
+   (- (fac con0 (fac con1 9 8) (fac con2 7 6)) (fac con1 (fac con0 1 2) (fac con2 3 4)))
+   (fac con0 (fac con1 8 (fac con2 5 4)) (fac con1 (fac con2 5 4) (fac con2 4 2))))
+
+  (check-equal?
+   (- (fac con0 10 9) 2)
+   (fac con0 8 7))
+
+  (check-equal?
+   (- (fac con0 10 9) (- (fac con1 8 7) (- (fac con2 6 5) (fac con3 4 3))))
+   (fac con0
+        (fac con1
+             (fac con2
+                  (fac con3 4 5)
+                  (fac con3 3 4))
+             (fac con2
+                  (fac con3 5 6)
+                  (fac con3 4 5)))
+        (fac con1
+             (fac con2
+                  (fac con3 3 4)
+                  (fac con3 2 3))
+             (fac con2
+                  (fac con3 4 5)
+                  (fac con3 3 4)))))
+  
+  ; Test case for the built-in and
+  ; it fails for now.
+  (check-equal?
+   (and (fac con0 #t (void)) (fac con1 #f (void)))
+   (fac con0 (fac con1 #f (void)) (void)))
+
+  (check-equal?
+   (and (fac con2 #t #f))
+   (fac con2 #t #f))
+
+  ; Test case for the built-in or
+  (check-equal?
+   (or (fac con2 (fac con1 1 2) (fac con1 #t #f)))
+   (fac con2 (fac con1 1 2) (fac con1 #t #f)))
+  
+  (check-equal?
+   (or (fac con2 #t #f) (fac con1 #t #f))
+   (fac con2 (fac con1 #t #t) (fac con1 #t #f)))
   
   ;
   ; Tests for obs
@@ -168,7 +271,6 @@
    (obs con1 #f (fac con1 1 2))
    2)
 
-  ; Should it be (fac con2 1 2) instead of (fac con1 1 2)?
   (check-equal?
    (obs con2 #t (fac con1 1 2))
    (fac con1 1 2))
@@ -243,6 +345,8 @@
                 (ref-set! x (fac con2 (lambda (y) (- y y y)) (lambda (y) (* y y)))))
             ((obs con1 #t (obs con1 #f (deref x))) 2)))
    (fac con2 4 8) "It should return (fac con2 4 8)")
+
+  ; Should have a complicated test case that involves built-in, ref-set!, obs, and if
 
   ; A more ambitious test of applying builtins to faceted values
   (check-equal? 

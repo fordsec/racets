@@ -51,9 +51,6 @@
 
 ; Lambdas are rewritten into tagged closures so we can implement
 ; `racets` closures from primitives.
-; (define-syntax-rule (fac-lambda xs expr)
-;  (fclo (lambda xs expr)))
-
 (define-syntax-rule (fac-lambda xs expr)
   (fclo (lambda xs expr)))
 
