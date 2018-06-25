@@ -49,9 +49,6 @@
  ref-set!
  )
 
-; The starting pc in the program
-(define current-pc (make-parameter (set)))
-
 ; Lambdas are rewritten into tagged closures so we can implement
 ; `racets` closures from primitives.
 ; (define-syntax-rule (fac-lambda xs expr)
@@ -64,14 +61,6 @@
   (let ([l (labelpair (gensym 'lab)
                       (lambda xs e))])
     body))
-
-; Construct a faceted value with a specific name and from values of
-; pos and neg branches
-(define (mkfacet name v1 v2)
-  (construct-facet-optimized
-   (set->list (set-add (current-pc) (pos name)))
-   v1
-   v2))
 
 ; Syntax for facet construction
 (define-syntax-rule (fac l v1 v2)
@@ -92,9 +81,9 @@
                   (facet-right v2))
               (let* ([v2-l (facet-left v2)]
                      [v2-r (facet-right v2)])
-                (facet v2-name
-                       (obsf lp v1 v2-l)
-                       (obsf lp v1 v2-r)))))
+                (mkfacet v2-name
+                         (obsf lp v1 v2-l)
+                         (obsf lp v1 v2-r)))))
         v2)))
 
 (define-syntax (fac-module-begin stx)

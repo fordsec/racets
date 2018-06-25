@@ -255,4 +255,45 @@
    (fac
     con1
     (fac con2 (fac con3 -1 0) (fac con3 0 1))
-    (fac con3 1 3))))
+    (fac con3 1 3)))
+  
+  ; A test of faceted builtins on faceted values
+  (check-equal?
+   ((fac con1 (fac con2 + -) (fac con2 * list))
+    (begin (inc)
+           (fac con1
+                (fac con2 (begin (inc) 1) (begin (inc) 2))
+                (fac con3 (begin (inc) 3) (begin (inc) 4))))
+    (fac con3 (begin (inc) 2) (begin (inc) 1)))
+   (fac
+    con1
+    (fac
+     con2
+     (fac con1 (fac con3 3 2) 3)
+     (fac
+      con1
+      (fac
+       con2
+       (fac con1 (fac con3 -1 0) (fac con3 0 1))
+       (fac con3 0 1))
+      3))
+    (fac
+     con2
+     (fac con1 (fac con3 2 1) (fac con3 6 4))
+     (fac
+      con1
+      (fac
+       con2
+       (fac con3 '(1 2) '(1 1))
+       (fac con3 '(2 2) '(2 1)))
+      (fac con3 '(3 2) '(4 1))))))
+
+
+  #;
+  (check-equal?
+   ((fac con1 (fac con2 + -) (fac con2 * list))
+    (begin (inc)
+           (fac con1
+                (fac con2 (begin (inc) 1) (begin (inc) 2))
+                (fac con3 (begin (inc) 3) (begin (inc) 4))))
+    (fac con3 (begin (inc) 2) (begin (inc) 1)))))

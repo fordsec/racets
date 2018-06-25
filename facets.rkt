@@ -73,6 +73,17 @@
             (construct-facet-optimized pc vn vb))]))
 
 
+; The starting pc in the program
+(define current-pc (make-parameter (set)))
+
+; Construct a faceted value with a specific name and from values of
+; pos and neg branches
+(define (mkfacet name v1 v2)
+  (construct-facet-optimized
+   (set->list (set-add (current-pc) (pos name)))
+   v1
+   v2))
+
 ;; Requires all faceted values to be in order (according to label<?)
 (define ((facet-fmap* f) . fvs)
   (if (ormap (match-lambda
