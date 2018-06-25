@@ -15,10 +15,7 @@
 (struct labelpair (name pol) #:transparent)
 
 ; Tagged faceted closures
-(struct fclo (clo))
-
-; faceted lambda closures
-(struct facet-\lambda (clo) #:transparent)
+(struct fclo (clo) #:transparent)
 
 ; Label comparison
 (define (label<? l1 l2)
@@ -75,17 +72,28 @@
      (facet k (construct-facet-optimized pc vn va)
             (construct-facet-optimized pc vn vb))]))
 
+
+;; Requires all faceted values to be in order (according to label<?)
 (define ((facet-fmap* f) . fvs)
-  ;; Requires all faceted values to be in order (according to label<?)
-  (if (ormap (match-lambda [(facet _ _ _) #t][else #f]) fvs)
-      (let* ([l (foldl (lambda (fv ll) (match fv [(facet lab lv rv) (if (label<? ll lab) ll lab)][else ll])) (void) fvs)]
-             [fvs+ (map (match-lambda [(and v (facet lab lv rv)) #:when (eq? lab l) v]
-	                              [v (facet l v v)])
-		        fvs)]
-	     [lvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
-	     [rvs (map (match-lambda [(facet _ _ rv) rv]) fvs+)]
-	     [lv (apply (facet-fmap* f) lvs)]
-	     [rv (apply (facet-fmap* f) rvs)])
+  (if (ormap (match-lambda
+               [(facet _ _ _) #t]
+               [else #f]) fvs)
+      (let* ([l (foldl
+                 (lambda (fv ll)
+                   (match fv
+                     [(facet lab lv rv) (if (label<? ll lab) ll lab)]
+                     [else ll]))
+                 '∞
+                 fvs)]
+             [fvs+ (map
+                    (match-lambda
+                      [(and v (facet lab lv rv)) #:when (eq? lab l) v]
+                      [v (facet l v v)])
+                    fvs)]
+             [lvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
+             [rvs (map (match-lambda [(facet _ _ rv) rv]) fvs+)]
+             [lv (apply (facet-fmap* f) lvs)]
+             [rv (apply (facet-fmap* f) rvs)])
         (facet l lv rv))
       (apply f fvs)))
 

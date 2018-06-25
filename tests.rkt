@@ -1,4 +1,4 @@
-#lang reader "../racets.rkt"
+#lang reader "racets.rkt"
 (require racket/stxparam)
 
 (module+ test
@@ -242,4 +242,17 @@
                 (ref-set! x (fac con2 (lambda (y) (+ y y)) (lambda (y) (* y y y))))
                 (ref-set! x (fac con2 (lambda (y) (- y y y)) (lambda (y) (* y y)))))
             ((obs con1 #t (obs con1 #f (deref x))) 2)))
-   (fac con2 4 8) "It should return (fac con2 4 8)"))
+   (fac con2 4 8) "It should return (fac con2 4 8)")
+
+  ; A more ambitious test of applying builtins to faceted values
+  (check-equal? 
+   (-
+    (begin (inc)
+           (fac con1
+                (fac con2 (begin (inc) 1) (begin (inc) 2))
+                (fac con3 (begin (inc) 3) (begin (inc) 4))))
+    (fac con3 (begin (inc) 2) (begin (inc) 1)))
+   (fac
+    con1
+    (fac con2 (fac con3 -1 0) (fac con3 0 1))
+    (fac con3 1 3))))

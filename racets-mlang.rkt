@@ -58,7 +58,7 @@
 ;  (fclo (lambda xs expr)))
 
 (define-syntax-rule (fac-lambda xs expr)
-  (facet-\lambda (lambda xs expr)))
+  (fclo (lambda xs expr)))
 
 (define-syntax-rule (let-label l (lambda xs e) body)
   (let ([l (labelpair (gensym 'lab)
@@ -82,12 +82,12 @@
 ; e1 - The argument being passed to the policy 
 (define-syntax-rule (obs l e1 e2)
   (let obsf ([lp l]
-             [v1 e1] ;; TODO: should e1 be reevaluated?
+             [v1 e1]
              [v2 e2])
-      (if (facet? v2)
-          (let ([v2-name (facet-labelname v2)])
-            (if (equal? v2-name (labelpair-name lp))
-              (if ((labelpair-pol lp) v1)
+    (if (facet? v2)
+        (let ([v2-name (facet-labelname v2)])
+          (if (equal? v2-name (labelpair-name lp))
+              (if (fac-app (labelpair-pol lp) v1)
                   (facet-left v2)
                   (facet-right v2))
               (let* ([v2-l (facet-left v2)]
@@ -95,7 +95,7 @@
                 (facet v2-name
                        (obsf lp v1 v2-l)
                        (obsf lp v1 v2-r)))))
-          v2)))
+        v2)))
 
 (define-syntax (fac-module-begin stx)
   (syntax-case stx ()
@@ -178,30 +178,29 @@
              var))]))
 
 ; Faceted application
-; Broken for builtins.
 (define-syntax (fac-app stx)
   (syntax-case stx ()
-    [(_ f a0 ...)
-     #`(let ([func f])
-         (if (facet? func)
-           (let* ([left
-                   (parameterize ([current-pc
-                                   (set-add (current-pc)
-                                            (pos (facet-labelname func)))])
-                     (if (facet-\lambda? (facet-left func))
-                         (#%app (facet-\lambda-clo (facet-left func)) a0 ...)
-                         (#%app (facet-left func) a0 ...)))]
-                  [right
-                   (parameterize ([current-pc
-                                   (set-add (current-pc)
-                                            (neg (facet-labelname func)))])
-                     (if (facet-\lambda? (facet-right func))
-                         (#%app (facet-\lambda-clo (facet-right func)) a0 ...)
-                         (#%app (facet-right func) a0 ...)))])
-             (mkfacet (facet-labelname func)
-                      left
-                      right))
-           ((facet-fmap* func) a0 ...)))]))
+    [(_ f . args)
+     #`(let applyf ([func f])
+         (cond
+           [(facet? func)
+            (let* ([left
+                    (parameterize ([current-pc
+                                    (set-add (current-pc)
+                                             (pos (facet-labelname func)))])
+                      (applyf (facet-left func)))]
+                   [right
+                    (parameterize ([current-pc
+                                    (set-add (current-pc)
+                                             (neg (facet-labelname func)))])
+                      (applyf (facet-right func)))])
+              (mkfacet (facet-labelname func)
+                       left
+                       right))]
+           ; An fclo coming from Racets
+           [(fclo? func) ((fclo-clo func) . args)]
+           ; Not an fclo. Must be a builtin, etc..
+           [else ((facet-fmap* func) . args)]))]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.
