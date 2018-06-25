@@ -13,16 +13,16 @@
   (all-from-out racket)
   with-continuation-mark
   #%module-begin
-;  #%plain-lambda
-;  lambda
+  #%plain-lambda
+  lambda
   if
   #%app)
  ; Rename out our core forms
  (rename-out
   [fac-module-begin #%module-begin]
   [fac-app #%app]
-;  [fac-lambda #%plain-lambda]
-;  [fac-lambda lambda]
+  [fac-lambda #%plain-lambda]
+  [fac-lambda lambda]
   [fac-if if]
   [fac-continuation-mark with-continuation-mark])
 
@@ -56,6 +56,9 @@
 ; `racets` closures from primitives.
 ; (define-syntax-rule (fac-lambda xs expr)
 ;  (fclo (lambda xs expr)))
+
+(define-syntax-rule (fac-lambda xs expr)
+  (facet-\lambda (lambda xs expr)))
 
 (define-syntax-rule (let-label l (lambda xs e) body)
   (let ([l (labelpair (gensym 'lab)
@@ -185,16 +188,20 @@
                    (parameterize ([current-pc
                                    (set-add (current-pc)
                                             (pos (facet-labelname func)))])
-                     (#%app (facet-left func) a0 ...))]
+                     (if (facet-\lambda? (facet-left func))
+                         (#%app (facet-\lambda-clo (facet-left func)) a0 ...)
+                         (#%app (facet-left func) a0 ...)))]
                   [right
                    (parameterize ([current-pc
                                    (set-add (current-pc)
                                             (neg (facet-labelname func)))])
-                     (#%app (facet-right func) a0 ...))])
+                     (if (facet-\lambda? (facet-right func))
+                         (#%app (facet-\lambda-clo (facet-right func)) a0 ...)
+                         (#%app (facet-right func) a0 ...)))])
              (mkfacet (facet-labelname func)
                       left
                       right))
-           (func a0 ...)))]))
+           ((facet-fmap* func) a0 ...)))]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.

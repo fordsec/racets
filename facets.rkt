@@ -17,6 +17,9 @@
 ; Tagged faceted closures
 (struct fclo (clo))
 
+; faceted lambda closures
+(struct facet-\lambda (clo) #:transparent)
+
 ; Label comparison
 (define (label<? l1 l2)
   (match (cons l1 l2)
@@ -80,7 +83,7 @@
 	                              [v (facet l v v)])
 		        fvs)]
 	     [lvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
-	     [rvs (map (match-lambda [(facet _ lv _) lv]) fvs+)]
+	     [rvs (map (match-lambda [(facet _ _ rv) rv]) fvs+)]
 	     [lv (apply (facet-fmap* f) lvs)]
 	     [rv (apply (facet-fmap* f) rvs)])
         (facet l lv rv))

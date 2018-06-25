@@ -4,11 +4,15 @@
 (module+ test
   (require rackunit)
   (require rackunit/text-ui)
+
+  (define num 0)
+  (define (inc) (set! num (+ num 1)))
   
   ; A few test contracts
   (define con0 (let-label con0 (lambda (x) (x)) con0))
   (define con1 (let-label con1 (lambda (x) x) con1))
   (define con2 (let-label con2 (lambda (x) (not x)) con2))
+  (define con3 (let-label con3 (lambda (x) (+ x x)) con3))
 
   ;
   ; Tests for basic function application
@@ -35,7 +39,7 @@
    (fac con2 4 4) "It should return (fac con2 4 4)")
   
   ;
-  ; Tests for set!
+  ; Tests for ref-set!
   ;
   
   ; Should be (fac con1 2 1)
@@ -62,7 +66,6 @@
      (begin (if (fac con1 #f #f) (ref-set! x 1) (ref-set! x 2)) (deref x)))
    (fac con1 2 2) "It should return (fac con1 2 2)")
 
-  ; !!!still weird!!!
   ; Should be (fac con1 (fac con2 #f 1) (fac con2 #f 1))
   (check-equal?
    (let* ([x (ref #t)])
@@ -88,6 +91,44 @@
    2 "It should return 2.")
 
   (check-equal?
+   (let ([x (ref 0)])
+     (begin (if (fac con1 #t #f)
+                (if (fac con2 #t #f)
+                    (ref-set! x 1)
+                    (ref-set! x 2))
+                (ref-set! x 3))
+            (obs con1 #t (obs con2 #f (deref x)))))
+   1 "It should return 1.")
+
+  (check-equal?
+   (let ([x (ref 0)])
+     (begin (if (fac con1 #t #f)
+                (if (fac con2 #t #f)
+                    (ref-set! x 1)
+                    (ref-set! x 2))
+                (ref-set! x 3))
+            (deref x)))
+   (fac con1 (fac con2 1 2) 3) "It should return (fac con1 (fac con2 1 2) 3).")
+
+  ; a seem-to-be-trivial test case that involves multiple levels of if-else conditional clause
+  (check-equal?
+   (let ([x (ref 123)])
+     (begin (if (fac con1 #t #f)
+                (if (fac con2 #t #f)
+                    (if (fac con0 #t #f)
+                        (if (fac con1 #t #f)
+                            (if (fac con2 #t #f)
+                                (ref-set! x 0)
+                                (ref-set! x 1))
+                            (ref-set! x 2))
+                        (ref-set! x 3))
+                    (ref-set! x 4))
+                (ref-set! x 5))
+            (deref x)))
+   (fac con1 (fac con2 (fac con0 (fac con1 (fac con2 0 1) 2) 3) 4) 5)
+   "It should return (fac con1 (fac con2 (fac con0 (fac con1 (fac con2 0 1) 2) 3) 4) 5).")
+
+  (check-equal?
    (let ([x (ref 2)])
      (ref-set! x 3)
      (deref x))
@@ -100,6 +141,8 @@
      (ref-set! z 2)
      (obs con1 #t (deref z)))
    2 "It should return 2")
+
+  
   
   ; 
   ; Tests for builtins
@@ -139,8 +182,6 @@
   (check-equal?
    (obs con2 #t (fac con1 (fac con2 1 2) (fac con2 3 4)))
    (fac con1 2 4))
-
-  ; (display (obs con1 #t (fac con1 (fac con2 1 2) (fac con2 3 4))))
   
   (check-equal?
    (obs con2 #t (obs con1 #t (fac con1 (fac con2 1 2) (fac con2 3 4))))
@@ -151,7 +192,7 @@
    (fac con0 (fac con2 1 2) (fac con2 5 6)) "Should be (fac con0 (fac con2 1 2) (fac con2 5 6))")
 
   ;
-  ; Some combined test cases for set!, app, if, obs
+  ; Some combined test cases for ref-set!, app, if, obs
   ;
   
   ; Test case that combines obs and app.
@@ -159,7 +200,7 @@
    (obs con2 #t ((fac con2 (lambda (x) ((lambda (y) (+ x y)) 2)) (lambda (x) (* x x))) 2))
    4 "It should return 4")
 
-  ; Test case that combines app, set! and if.
+  ; Test case that combines app, ref-set! and if.
   (check-equal?
    (let ([x (ref 0)])
      (begin (if (fac con1 #f #t)
@@ -168,7 +209,7 @@
             ((deref x) 3)))
    (fac con1 9 6) "It should return (fac con1 9 6)")
 
-  ; Test case that combines obs, set!, and if.
+  ; Test case that combines obs, ref-set!, and if.
   (check-equal?
    (let ([x (ref 0)])
      (begin (if (fac con1 #f #t)
@@ -177,7 +218,7 @@
             (obs con1 #t (deref x))))
    2 "It should return 2")
 
-  ; Test cases that combine obs, set!, app and if.
+  ; Test cases that combine obs, ref-set!, app and if.
   (check-equal?
    (let ([x (ref 0)])
      (begin (if (fac con1 #f #t)
@@ -194,11 +235,11 @@
             ((obs con1 #t (deref x)) 3)))
    6 "It should return 6")
 
-  ; A complicated test case that involves app, set, obs, and if
+  ; A complicated test case that involves app, ref-set!, obs, and if
   (check-equal?
    (let ([x (ref 0)])
      (begin (if (fac con1 #f #t)
                 (ref-set! x (fac con2 (lambda (y) (+ y y)) (lambda (y) (* y y y))))
                 (ref-set! x (fac con2 (lambda (y) (- y y y)) (lambda (y) (* y y)))))
             ((obs con1 #t (obs con1 #f (deref x))) 2)))
-   (fac con2 -4 4) "It should return (fac con2 -4 4)"))
+   (fac con2 4 8) "It should return (fac con2 4 8)"))
