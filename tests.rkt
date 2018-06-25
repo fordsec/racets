@@ -1,4 +1,4 @@
-#lang reader "racets.rkt"
+#lang reader "../racets.rkt"
 (require racket/stxparam)
 
 (module+ test
