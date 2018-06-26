@@ -313,7 +313,7 @@
         (fac con0
              (fac con2 50 24)
              (fac con2
-                  (fac con3 33 1/3 25)
+                  (fac con3 (/ 100 3) 25)
                   (fac con3 40 30)))
         (fac con0
              (fac con3
