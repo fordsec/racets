@@ -105,7 +105,7 @@
              [rvs (map (match-lambda [(facet _ _ rv) rv]) fvs+)]
              [lv (apply (facet-fmap* f) lvs)]
              [rv (apply (facet-fmap* f) rvs)])
-        (facet l lv rv))
+        (mkfacet l lv rv))
       (apply f fvs)))
 
 (define (prim-to-δ op)

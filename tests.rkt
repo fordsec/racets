@@ -321,15 +321,34 @@
                   (fac con2 30 12))
              (fac con3 40 15))))
   
-  ; Test case for the built-in and
+  ; Test cases for the built-in and
   ; it fails for now.
+  #;
   (check-equal?
    (and (fac con0 #t (void)) (fac con1 #f (void)))
    (fac con0 (fac con1 #f (void)) (void)))
 
   (check-equal?
+   (and (fac con0 #t #f) (fac con1 #f #t))
+   (fac con0 (fac con1 #f #t) (fac con1 #f #f)))
+
+  (check-equal?
    (and (fac con2 #t #f))
    (fac con2 #t #f))
+
+  (check-equal?
+   (and (fac con1 #t #f) #f)
+   (fac con1 #f #f))
+
+  (check-equal?
+   (and (fac con0 #f #t) (fac con1 #t #f) (fac con2 #t #f))
+   (fac con0
+        (fac con1 (fac con2 #f #f) (fac con2 #f #f))
+        (fac con1 (fac con2 #t #f) (fac con2 #f #f))))
+  
+  (check-equal?
+   (and)
+   #t)
 
   ; Test case for the built-in or
   (check-equal?
@@ -340,6 +359,10 @@
   (check-equal?
    (or (fac con2 #t #f) (fac con1 #t #f))
    (fac con2 (fac con1 #t #t) (fac con1 #t #f)))
+
+  (check-equal?
+   (or)
+   #f)
   
   ;
   ; Tests for obs

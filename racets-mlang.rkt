@@ -16,6 +16,7 @@
   #%plain-lambda
   lambda
   if
+  and
   #%app)
  ; Rename out our core forms
  (rename-out
@@ -24,7 +25,8 @@
   [fac-lambda #%plain-lambda]
   [fac-lambda lambda]
   [fac-if if]
-  [fac-continuation-mark with-continuation-mark])
+  [fac-continuation-mark with-continuation-mark]
+  [fac-and and])
 
  ; 
  ; Extra macros unique to racets
@@ -187,6 +189,27 @@
            [(fclo? func) ((fclo-clo func) . args)]
            ; Not an fclo. Must be a builtin, etc..
            [else ((facet-fmap* func) . args)]))]))
+
+#;
+(define-syntax (fac-and stx)
+  (syntax-case stx ()
+    [(_) #`#t]
+    [(_ expr) #`expr]
+    [(_ . expr)
+     #`(let andloop ([var expr])
+         (if (ormap facet? expr)
+           (mkfacet (facet-labelname (car expr)) (andloop (cdr expr)) (andloop (cdr expr)))
+           (fac-and expr)))]))
+
+
+(define-syntax (fac-and stx)
+  (syntax-case stx ()
+    [(_) #`#t]
+    [(_ expr) #`expr]
+    [(_ expr expr* ...)
+     #`(fac-if expr
+               (fac-and expr* ...)
+               expr)]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.
