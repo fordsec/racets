@@ -345,6 +345,10 @@
    (fac con0
         (fac con1 (fac con2 #f #f) (fac con2 #f #f))
         (fac con1 (fac con2 #t #f) (fac con2 #f #f))))
+
+  (check-equal?
+   (and #f (fac con0 #t #f))
+   #f)
   
   (check-equal?
    (and)

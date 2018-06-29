@@ -17,6 +17,7 @@
   lambda
   if
   and
+  or
   #%app)
  ; Rename out our core forms
  (rename-out
@@ -26,7 +27,9 @@
   [fac-lambda lambda]
   [fac-if if]
   [fac-continuation-mark with-continuation-mark]
-  [fac-and and])
+  [fac-and and]
+  [fac-or or]
+  )
 
  ; 
  ; Extra macros unique to racets
@@ -197,11 +200,24 @@
     [(_ expr) #`expr]
     [(_ . expr)
      #`(let andloop ([var expr])
+           (if (andmap not (map facet? var))
+               (andmap var)
+               (mkfacet (facet-labelname (car var))
+                        (andloop (cdr var)) (andloop (cdr var)))))]))
+
+#;
+(define-syntax (fac-and stx)
+  (syntax-case stx ()
+    [(_) #`#t]
+    [(_ expr) #`expr]
+    [(_ . expr)
+     #`(let andloop ([var expr])
          (if (ormap facet? expr)
            (mkfacet (facet-labelname (car expr)) (andloop (cdr expr)) (andloop (cdr expr)))
-           (fac-and expr)))]))
+           (fac-and (cdr expr))))]))
 
-
+; and
+; Not entirely correct yet
 (define-syntax (fac-and stx)
   (syntax-case stx ()
     [(_) #`#t]
@@ -210,6 +226,18 @@
      #`(fac-if expr
                (fac-and expr* ...)
                expr)]))
+
+; or
+; Not entirely correct yet.
+(define-syntax (fac-or stx)
+  (syntax-case stx ()
+    [(_) #`#f]
+    [(_ expr) #`expr]
+    [(_ expr expr* ...)
+     #`(let ([t expr])
+         (fac-if t
+                 t
+                 (fac-or expr* ...)))]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.
