@@ -359,11 +359,18 @@
    (or (fac con2 (fac con1 1 2) (fac con1 #t #f)))
    (fac con2 (fac con1 1 2) (fac con1 #t #f)))
 
-  ; it fails for now.
   (check-equal?
    (or (fac con2 #t #f) (fac con1 #t #f))
    (fac con2 (fac con1 #t #t) (fac con1 #t #f)))
 
+  (check-equal?
+   (or (fac con1 #f #f) #t)
+   (fac con1 #t #t))
+
+  (check-equal?
+   (or (fac con2 #t #f) (fac con1 #t #f) (fac con3 #t #f))
+   (or (fac con2 #t #f) (or (fac con1 #t #f) (fac con3 #t #f))))
+  
   (check-equal?
    (or)
    #f)
