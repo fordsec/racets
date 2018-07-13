@@ -1,7 +1,71 @@
-#lang reader "racets.rkt"
-(require racket/stxparam)
+#lang racket
+(require racket/stxparam
+         web-server/servlet
+         web-server/servlet-env
+         racket/tcp)
 
-(let*
+;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
+;; This may serve as the foundation of the battleship game
+;; I will modify it to be completely different from the original code
+(define outs (list (current-output-port)))
+(define ((tell-all who o) line)
+  (for ([c outs] #:unless (eq? o c)) (displayln (~a who ": " line) c)))
+ 
+(define ((player i o))
+  (define player-screen (begin (displayln "Welcome to the Battleship!")))
+  (define nick (begin (display "Nick: " o) (read-line i)))
+  (define tell (tell-all nick o))
+  (let loop ([line "(joined)"])
+    (if (eof-object? line)
+      (begin (tell "(left)") (set! outs (remq o outs)) (close-output-port o))
+      (begin (tell line) player-screen (loop (read-line i))))))
+ 
+(define (battleship listener)
+  (define-values [i o] (tcp-accept listener))
+  (for ([p (list i o)]) (file-stream-buffer-mode p 'none))
+  (thread (player i o)) (set! outs (cons o outs)) (battleship listener))
+ 
+(void (thread (λ() (battleship (tcp-listen 8080)))))
+((player (current-input-port) (current-output-port)))
+
+#|
+(define (handle in out)
+  ; Discard the request header (up to blank line):
+  (regexp-match #rx"(\r\n|^)\r\n" in)
+  ; Send reply:
+  (display "HTTP/1.0 200 Okay\r\n" out)
+  (display "Server: k\r\nContent-Type: text/html\r\n\r\n" out)
+  (display "<html><body>Hello, world!</body></html>" out))
+  
+
+(define (accept-and-handle listener)
+  (define cust (make-custodian))
+  (parameterize ([current-custodian cust])
+    (define-values (in out)
+      (tcp-accept listener))
+    (thread
+     (λ ()
+       (handle in out)
+       (close-input-port in)
+       (close-output-port out))))
+  ; Watcher thread, close everything when a thread exits:
+  (thread (λ ()
+            (sleep 10)
+            (custodian-shutdown-all cust))))
+
+(define (server port-no)
+  (define main-cust (make-custodian))
+  (parameterize ([current-custodian main-cust])
+    (define listener (tcp-listen port-no 5 #t))
+    (define (loop)
+      (accept-and-handle listener)
+      (loop))
+    (thread loop))
+  (λ ()
+    (custodian-shutdown-all main-cust)))
+|#
+
+#|(let*
     ([empty (λ (iscons isnull)
                   (isnull))]
      [makecons (λ (a b)
@@ -57,3 +121,4 @@
            [res (mark-hit s1 1 1)]
            [b (obs p1 1 (cdr res))])
       b))))
+|#
