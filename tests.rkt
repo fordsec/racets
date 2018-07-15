@@ -1,6 +1,12 @@
 #lang reader "racets.rkt"
 (require racket/stxparam)
 
+(define con1 (let-label con1 (lambda (x) x) con1))
+(define con2 (let-label con2 (lambda (x) x) con2))
+(and (fac con1 #t #t) (fac con1 #t #t))
+(or (fac con1 #t #f) (fac con2 #t #f))
+
+#;
 (module+ test
   (require rackunit)
   (require rackunit/text-ui)
@@ -513,6 +519,10 @@
                        (fac con3 '(2 2) '(2 1)))
                   (fac con3 '(3 2) '(4 1))))))
 
+
+  (check-equal?
+   (and (fac con1 #f #t) (fac con1 (error) #t))
+   (fac con1 #f #t))
 
   #;
   (check-equal?

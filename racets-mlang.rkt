@@ -193,51 +193,20 @@
            ; Not an fclo. Must be a builtin, etc..
            [else ((facet-fmap* func) . args)]))]))
 
-#;
+;
+; And/or
+;
 (define-syntax (fac-and stx)
   (syntax-case stx ()
     [(_) #`#t]
-    [(_ expr) #`expr]
-    [(_ . expr)
-     #`(let andloop ([var expr])
-           (if (andmap not (map facet? var))
-               (andmap var)
-               (mkfacet (facet-labelname (car var))
-                        (andloop (cdr var)) (andloop (cdr var)))))]))
+    [(_ e0 es ...)
+     #`(fac-if e0 (fac-and es ...) #f)]))
 
-#;
-(define-syntax (fac-and stx)
-  (syntax-case stx ()
-    [(_) #`#t]
-    [(_ expr) #`expr]
-    [(_ . expr)
-     #`(let andloop ([var expr])
-         (if (ormap facet? expr)
-           (mkfacet (facet-labelname (car expr)) (andloop (cdr expr)) (andloop (cdr expr)))
-           (fac-and (cdr expr))))]))
-
-; and
-; Not entirely correct yet
-(define-syntax (fac-and stx)
-  (syntax-case stx ()
-    [(_) #`#t]
-    [(_ expr) #`expr]
-    [(_ expr expr* ...)
-     #`(fac-if expr
-               (fac-and expr* ...)
-               expr)]))
-
-; or
-; Not entirely correct yet.
 (define-syntax (fac-or stx)
   (syntax-case stx ()
     [(_) #`#f]
-    [(_ expr) #`expr]
-    [(_ expr expr* ...)
-     #`(let ([t expr])
-         (fac-if t
-                 t
-                 (fac-or expr* ...)))]))
+    [(_ e0 es ...)
+     #`(fac-if e0 #t (fac-and es ...))]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.
