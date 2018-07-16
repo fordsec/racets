@@ -4,10 +4,102 @@
          web-server/servlet-env
          racket/tcp)
 
+;; Define some constants for the Battleship game
+(define field-size 10)
+
+
+;; struct for all ship
+;; bow-row -> int, bow-column -> int, length -> int, horizontal -> boolean,
+;; hit -> a list of boolean to indicates the hits
+(struct ship (bow-row bow-column length horizontal hits))
+
+; get the length of the ship
+(define (get-length-of-ship a-ship)
+  (if (ship? a-ship)
+      (ship-length a-ship)
+      (raise "It is not a ship struct.")))
+
+; get the bow-row of the ship
+(define (get-bow-row-of-ship a-ship)
+  (if (ship? a-ship)
+      (ship-bow-row a-ship)
+      (raise "It is not a ship struct.")))
+
+; get the bow-column of the ship
+(define (get-bow-column-of-ship a-ship)
+  (if (ship? a-ship)
+      (ship-bow-column a-ship)
+      (raise "It is not a ship struct.")))
+
+; get the horizontality of the ship
+(define (is-horizontal a-ship)
+  (if (ship? a-ship)
+      (ship-horizontal a-ship)
+      (raise "It is not a ship struct.")))
+
+; get the length of the ship
+(define (get-hit-of-ship a-ship)
+  (if (ship? a-ship)
+      (ship-hits a-ship)
+      (raise "It is not a ship struct.")))
+
+; set the bow row of the ship
+(define (set-bow-row-of-ship a-ship row)
+  (if (ship? a-ship)
+      (ship row (ship-bow-column a-ship) (ship-length a-ship) (ship-horizontal a-ship) (ship-hits a-ship))
+      (raise "It is not a ship struct.")))
+
+; set the bow column of the ship
+(define (set-bow-column-of-ship a-ship column)
+  (if (ship? a-ship)
+      (ship (ship-bow-row a-ship) column (ship-length a-ship) (ship-horizontal a-ship) (ship-hits a-ship))
+      (raise "It is not a ship struct.")))
+
+; set the horizontal of the ship
+(define (set-horizontal-of-ship a-ship horizontal)
+  (if (ship? a-ship)
+      (ship (ship-bow-row a-ship) (ship-bow-column a-ship) (ship-length a-ship) horizontal (ship-hits a-ship))
+      (raise "It is not a ship struct.")))
+
+; get the type of a ship
+(define (get-ship-type a-ship)
+  (if (ship? a-ship)
+      (cond
+        [(= (ship-length a-ship) 4)
+         (displayln "Battleship")]
+        [(= (ship-length a-ship) 3)
+         (displayln "Cruiser")]
+        [(= (ship-length a-ship) 2)
+         (displayln "Destroyer")]
+        [(= (ship-length a-ship) 1)
+         (displayln "Submarine")]
+        [else
+         (displayln "not a ship")])
+      (raise "It is not a ship struct.")))
+
+; Check if it is ok to place the ship at this location
+
+
+; place the ship at a particular location
+
+
+; check if the ship has been sunk or not.
+; Return true if it is sunk. Otherwise, false.
+(define (is-sunk a-ship)
+  (if (ship? a-ship)
+      (andmap (λ (x) (and x)) (ship-hits a-ship))
+      (raise "It is not a ship struct.")))
+
+; shoot at a particular location in the ocean
+
+
+
+
+
 ;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
 ;; This may serve as the foundation of the battleship game
 ;; I will modify it to be completely different from the original code
-(define outs (list (current-output-port)))
+#|(define outs (list (current-output-port)))
 (define ((tell-all who o) line)
   (for ([c outs] #:unless (eq? o c)) (displayln (~a who ": " line) c)))
  
@@ -25,9 +117,9 @@
   (for ([p (list i o)]) (file-stream-buffer-mode p 'none))
   (thread (player i o)) (set! outs (cons o outs)) (battleship listener))
  
-(void (thread (λ() (battleship (tcp-listen 8080)))))
+(void (thread (λ () (battleship (tcp-listen 8080)))))
 ((player (current-input-port) (current-output-port)))
-
+|#
 #|
 (define (handle in out)
   ; Discard the request header (up to blank line):
