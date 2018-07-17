@@ -68,23 +68,24 @@ through each branch so that we end up with @(m (facet @italic{Alice}
 @code{#t})). Other core forms (such as @code{if}, @code{cond}, etc...)
 require similar changes.
 
-For many languages, the core linguistic changes needed to enable
-faceted execution have led to relatively inelegant and heavyweight
-implementations. For example, Flanagan et. al (who first presented
-faceted execution) extended the JavaScript runtime to account for
-faceted values. Similarly, the Jeeves programming language does (what
-does it do?). By contrast, Racket provides a highly-expressive macro
-system, allowing core forms to be easily redefined to implement
-faceted execution.
+The core linguistic changes required by faceted execution have led to
+relatively inelegant and heavyweight implementations thusfar. For
+example, Flanagan et. al (who first presented faceted execution)
+extended the JavaScript runtime to account for faceted
+values. Similarly, the Jeeves programming language does (what does it
+do?). By contrast, Racket's highly-expressive macro system allows even
+core forms (such as @code{#%app}) to be redefined with relative ease.
 
 In this paper we present Racets, an implementation of policy-agnostic
 programming in Racket via macros. Racets provides facilities for
-creating policies, faceted data, and observing that data. Racets also
-extends several core forms in Racket to work with faceted values (our
-implementation is detailed in section @secref{implementation}). We
+creating policies and faceting secure data with those policies. Racets
+also extends several core forms in Racket to work with faceted
+values (our implementation is detailed in @Secref{implementation}). We
 have measured the overhead of Racets in several microbenchmarks, and
 have used Racets to implement a small server-based
-board-game (detailed in section @secref{evaluation}).
+board-game (detailed in @Secref{evaluation}). We see Racets as a
+promising prototype for policy-agnostic programming in Racket, and
+conclude with several future directions in @Secref{conclusion}.
 
 @section[#:tag "overview"]{Overview of Faceted Execution}
 
