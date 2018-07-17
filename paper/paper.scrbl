@@ -1,6 +1,10 @@
 #lang scribble/acmart @acmlarge @review @natbib
-@(require scriblib/bibtex
-          latex-utils/scribble/math)
+@(require
+  (only-in scribble/manual
+           racketblock
+           codeblock)
+  scriblib/bibtex
+  latex-utils/scribble/math)
 
 @title{Racets: Embedding Policy-Agnostic Programming in Racket}
 @author["Kristopher Micinski"
@@ -88,6 +92,79 @@ promising prototype for policy-agnostic programming in Racket, and
 conclude with several future directions in @Secref{conclusion}.
 
 @section[#:tag "overview"]{Overview of Faceted Execution}
+
+To introduce our setting we present the implementation of Battleship,
+a small guessing-based board game, in Racets (this section presents a
+distilled version of our case study in @Secref{case-study}). In this
+game each player has a grid-based board on which they place tiles (or
+``ships''). The players hide their boards from each other as play
+progresses in rounds. Each turn a player guesses the position of a
+tile on the other player's board. If the guess is successful that tile
+is removed from the board. Play ends once one player's board has no
+remaining tiles, at which point that player loses.
+
+Our program begins by specifying that it should use our Racets macros,
+rather than plain Racket:
+
+@;{@codeblock|{
+  #lang reader "racets.rkt"
+}|}
+
+We implement game boards as lists of cons cells representing the
+@(m "(x,y)") coordinates of ships on the board. Board creation is
+simply the empty list, and adding a piece is done via @code{cons}:
+
+@codeblock|{
+  (define (makeboard) '())
+  (define (add-piece board x y) (cons (cons x y) board))
+}|
+
+Next we define @code{mark-hit}, which takes a player's board and
+removes a piece if the guessed coordinate is present. We return a pair
+of the updated board and a boolean indicating whether the guess was a
+hit:
+
+@codeblock|{
+  (define (mark-hit board x y)
+    (if (null? board)
+        (cons board #f)
+        (let* ([fst (car board)]
+               [rst (cdr board)])
+          (if (and (= (car fst) x)
+                   (= (cdr fst) y))
+              (cons rst #t)
+              (let ([rst+b (mark-hit rst x y)])
+                (cons (cons fst
+                            (car rst+b))
+                      (cdr rst+b)))))))
+}|
+
+Although @code{mark-hit} will operate on sensitive data (the game
+boards), it is written without any special machinery to maintain the
+secrecy of @code{board}. Protecting data w.r.t. policies is instead
+handled automatically and implicitly by a runtime monitor.  When Alice
+and Bob want to play a game, they both create a label to protect their
+data. A label is a predicate that takes an argument and, if it returns
+true, reveals a secret. Alice's label is used to annotate whatever
+data she wants to be kept secret. Supposing Alice chooses to be player
+1, she will use the following label:
+
+@codeblock|{
+  (define alice-label (let-label alice (lambda (x) (= 1 x)) alice))
+}|
+
+Bob would use a similar label (but with 2 instead of 1). At runtime,
+the @code{label} form creates a label and returns it to the binding
+for @code{alice-label}. When Alice wants to protect a value, she
+creates a facet, annotated with her label and two branches. The
+positive (left) branch represents the value as it should appear to
+her, and the negative (right) to everyone else:
+
+@codeblock|{
+            (define alice-board (fac alice-label
+                                     (add-pieces (makeboard) x1 y1 ... xn yn)
+                                     (makeboard)))
+}|
 
 @section[#:tag "semantics"]{Semantics}
 
