@@ -2,11 +2,20 @@
 (require racket/stxparam
          web-server/servlet
          web-server/servlet-env
-         racket/tcp)
+         racket/tcp
+         srfi/25)
 
 ;; Define some constants for the Battleship game
 (define field-size 10)
+(define start-game #f)
+(define ocean-board (make-array (shape 0 10 0 10) "x"))
 
+; print out the board for visualization
+(define (pretty-print board)
+  (for ([i (in-range (array-length board 0))])
+    (for ([j (in-range (array-length board 1))])
+      (display (string-append (array-ref board i j) " ")))
+    (newline)))
 
 ;; struct for all ship
 ;; bow-row -> int, bow-column -> int, length -> int, horizontal -> boolean,
@@ -17,49 +26,49 @@
 (define (get-length-of-ship a-ship)
   (if (ship? a-ship)
       (ship-length a-ship)
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; get the bow-row of the ship
 (define (get-bow-row-of-ship a-ship)
   (if (ship? a-ship)
       (ship-bow-row a-ship)
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; get the bow-column of the ship
 (define (get-bow-column-of-ship a-ship)
   (if (ship? a-ship)
       (ship-bow-column a-ship)
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; get the horizontality of the ship
 (define (is-horizontal a-ship)
   (if (ship? a-ship)
       (ship-horizontal a-ship)
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; get the length of the ship
 (define (get-hit-of-ship a-ship)
   (if (ship? a-ship)
       (ship-hits a-ship)
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; set the bow row of the ship
 (define (set-bow-row-of-ship a-ship row)
   (if (ship? a-ship)
       (ship row (ship-bow-column a-ship) (ship-length a-ship) (ship-horizontal a-ship) (ship-hits a-ship))
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; set the bow column of the ship
 (define (set-bow-column-of-ship a-ship column)
   (if (ship? a-ship)
       (ship (ship-bow-row a-ship) column (ship-length a-ship) (ship-horizontal a-ship) (ship-hits a-ship))
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; set the horizontal of the ship
 (define (set-horizontal-of-ship a-ship horizontal)
   (if (ship? a-ship)
       (ship (ship-bow-row a-ship) (ship-bow-column a-ship) (ship-length a-ship) horizontal (ship-hits a-ship))
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; get the type of a ship
 (define (get-ship-type a-ship)
@@ -75,26 +84,80 @@
          (displayln "Submarine")]
         [else
          (displayln "not a ship")])
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; Check if it is ok to place the ship at this location
-
+; Return true if it is ok to place the ship of this length at the location with
+; given orientation. Otherwise false.
+; The ship cannot overlap another ship, or touch another ship.
+; The minimum distance between two ships is 1. And it cannot go beyond the 10x10 ocean board.
+; not implemented yet.
+(define (ok-to-place-ship-at row column horizontal an-ocean a-ship) #t)
 
 ; place the ship at a particular location
+; Need to be careful about the length of the ship
+; not implemented yet.
+(define (place-ship-at row column horizontal an-ocean a-ship) (void))
 
-
-; check if the ship has been sunk or not.
+; check if the ship has been sunk or not by looking at the ship's hits list.
 ; Return true if it is sunk. Otherwise, false.
 (define (is-sunk a-ship)
   (if (ship? a-ship)
       (andmap (λ (x) (and x)) (ship-hits a-ship))
-      (raise "It is not a ship struct.")))
+      (raise "a-ship is not a ship struct.")))
 
 ; shoot at a particular location in the ocean
+; Return true and mark the corresponding part of the hits list of the ship
+; as true if a part of the ship occupies the given row and column and it isn't sunk.
+; Otherwise false.
+; not implemented yet.
+(define (shoot-at row column) (void))
 
 
+; Ocean struct
+(struct ocean-rep (ships-array shots-fired hit-count ships-sunk))
 
+; Initialize an ocean that has no ship at all
+(define ocean (ocean-rep (make-array (shape 0 10 0 10) (ship 0 0 0 #t (list))) 0 0 0))
 
+; check if a location in the ocean is occupied by a ship
+; Return true if it is occupied by a ship. Otherwise, false.
+(define (is-occupied row column an-ocean)
+  (if (ocean-rep? an-ocean)
+      (not (= (ship-length (array-ref (ocean-rep-ships-array an-ocean) row column)) 0))
+      (raise "an-ocean is not an ocean struct")))
+
+; shoot at a location given by row and column
+; Return true if the given location has a floating ship. Otherwise false.
+; At the same time we need to update the number of shots that have been fired,
+; and the number of hits.
+; not implemented yet
+(define (count-shoot-at row column an-ocean) (void))
+
+; get the number of shots fired in the ocean
+(define (get-shots-fired an-ocean)
+  (if (ocean-rep? an-ocean)
+      (ocean-rep-shots-fired an-ocean)
+      (raise "an-ocean is not an ocean struct")))
+
+; get the hit count of the ocean
+(define (get-hit-count an-ocean)
+    (if (ocean-rep? an-ocean)
+      (ocean-rep-hit-count an-ocean)
+      (raise "an-ocean is not an ocean struct")))
+
+; get the number of ships sunk in the ocean
+(define (get-num-of-ships-sunk an-ocean)
+    (if (ocean-rep? an-ocean)
+      (ocean-rep-ships-sunk an-ocean)
+      (raise "an-ocean is not an ocean struct")))
+
+; Check if the game is over
+; Return true if all ships have been sunk. Otherwise false
+(define (is-game-over an-ocean)
+  (if (ocean-rep? an-ocean)
+      (= (get-num-of-ships-sunk an-ocean) 10)
+      (raise "an-ocean is not an ocean struct")))
 
 ;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
 ;; This may serve as the foundation of the battleship game
