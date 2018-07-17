@@ -75,15 +75,15 @@
   (if (ship? a-ship)
       (cond
         [(= (ship-length a-ship) 4)
-         (displayln "Battleship")]
+         "Battleship"]
         [(= (ship-length a-ship) 3)
-         (displayln "Cruiser")]
+         "Cruiser"]
         [(= (ship-length a-ship) 2)
-         (displayln "Destroyer")]
+         "Destroyer"]
         [(= (ship-length a-ship) 1)
-         (displayln "Submarine")]
+         "Submarine"]
         [else
-         (displayln "not a ship")])
+         (displayln "not a ship supported by my Battleship game.")])
       (raise "a-ship is not a ship struct.")))
 
 ; Check if it is ok to place the ship at this location
@@ -92,7 +92,22 @@
 ; The ship cannot overlap another ship, or touch another ship.
 ; The minimum distance between two ships is 1. And it cannot go beyond the 10x10 ocean board.
 ; not implemented yet.
-(define (ok-to-place-ship-at row column horizontal an-ocean a-ship) #t)
+(define (ok-to-place-ship-at row column horizontal an-ocean a-ship)
+  (if (ocean-rep? an-ocean)
+      (if (ship? a-ship)
+          (if (and (< row 10) (>= row 0) (< column 10) (>= column 0))
+              ;check if the location given by row and column is occupied or not
+              (if (not (is-occupied row column an-ocean))
+                  ; if it is not occupied, check its orientation
+                  (if horizontal
+                      ; get back to it later today!!!
+                      (void)
+                      (void))
+                  ; else, return false
+                  #f)
+              (raise "Illegal row or column"))
+          (raise "a-ship is not a ship struct"))
+      (raise "an-ocean is not an ocean struct")))
 
 ; place the ship at a particular location
 ; Need to be careful about the length of the ship
@@ -111,7 +126,7 @@
 ; as true if a part of the ship occupies the given row and column and it isn't sunk.
 ; Otherwise false.
 ; not implemented yet.
-(define (shoot-at row column) (void))
+(define (shoot-at row column an-assulting-ship an-ocean) (void))
 
 
 ; Ocean struct
