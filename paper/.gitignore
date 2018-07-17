@@ -1,0 +1,9 @@
+*.cls
+*.css
+*.aux
+*.html
+*.log
+paper.tex
+*.js
+*.out
+paper.pdf
