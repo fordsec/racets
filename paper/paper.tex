@@ -4,7 +4,8 @@
 \usepackage[linguistics]{forest}
 \usepackage{tikz}
 \usetikzlibrary{cd}
-
+\usepackage{xcolor}
+\usepackage{mathpartir} % Inference rules
 \usepackage[ruled]{algorithm2e} % For algorithms
 \renewcommand{\algorithmcfname}{ALGORITHM}
 \SetAlFnt{\small}
@@ -64,7 +65,9 @@
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
 \newcommand{\colorMATH}{black!20!blue}
+\newcommand{\colorFAC}{black!20!red}
 \newcommand{\blue}[1] {{\color{\colorMATH} #1}}
+\newcommand{\fcol}[1] {{\color{\colorFAC} #1}}
 \newcommand{\bmth}[1] {{\color{\colorMATH} $#1$}}
 \newcommand{\code}[1]{\lstinline{#1}}
 
@@ -73,7 +76,8 @@
 \newcommand{\kris}[1]{\comm[\color{blue}]{Kris}{#1}}
 \newcommand{\tom}[1]{\comm[\color{orange}]{Tom}{#1}}
 \newcommand{\lang}[0]{$\lambda_\textsc{FE}$\xspace}
-\newcommand{\facet}[3]{\blue{${\langle \, {#1} \: ? \: {#2} \diamond \: {#3} \, \rangle}$}}
+\newcommand{\facet}[3]{{\fcol{\ensuremath{\langle \, {#1} \: ? \: {#2} \diamond \: {#3} \, \rangle}}}}
+\newcommand{\formfacet}[3]{{\fcol{\ensuremath{\langle \langle \, {#1} \: ? \: {#2} \diamond \: {#3} \,  \rangle \rangle}}}}
 
 
 \begin{document}
@@ -321,6 +325,125 @@ in Section~\ref{sec:semantics}, where we present a full semantics for
 faceted execution.
 
 \kris{Stuff about obs here..}
+
+\section{A Formal Semantics for Faceted Execution}
+
+\begin{figure}
+\begin{displaymath}
+  \begin{array}{lcrcl}
+    \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{() \mid \code{\#t} \mid \code{\#f} \mid \ldots} \\
+    \blue{x} & \blue{\in} & \blue{var} & \blue{::=} & \blue{\ldots}  \\
+    \blue{e} & \blue{\in} & \blue{exp} & \blue{::=} & \blue{c} \mid \blue{x} \\
+    & & & \blue{\mid} & \blue{(\lambda ~ (x) ~ e) \mid (e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{box} ~ e) \mid (\code{unbox} ~ e) \mid (\code{set!} ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{let-label} ~ \ell ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{facet} ~ e ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{obs} ~ e ~ e ~ e)} \\
+  \end{array}
+\end{displaymath}
+\label{fig:syntax}
+\caption{Syntax of \lang}
+\end{figure}
+
+We now present a semantics for a core language (\lang) which includes
+facets. Our presentation largely mirrors that of Austin et
+al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
+Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
+calculus with references (which have interact with facets in a subtle
+way) and three forms unique to faceted execution: label creation,
+facet construction, and facet observation.
+
+\begin{figure*}
+    \begin{tabular}{cc}
+      \begin{minipage}{.5\textwidth}
+        \begin{displaymath}
+          \begin{array}{rcrcl}
+            \blue{\alpha} & \blue{\in} & \blue{\text{addr}} & \blue{=} & \blue{\ldots} \\
+            \blue{bv} & \blue{\in} & \blue{\text{base-val}} & \blue{::=} & \blue{c \mid \alpha \mid \langle \lambda x.~ e, \rho \rangle \mid \star}\\
+            \fcol{v} & \blue{\in} & \blue{\text{faceted-val}} & \blue{::=} & \blue{bv \mid} ~ \fcol{\facet{\blue{\alpha}}{v}{v}}
+            \\
+          \end{array}
+        \end{displaymath}
+      \end{minipage}
+      &
+      \begin{minipage}{.5\textwidth}
+        \begin{displaymath}
+          \begin{array}{rcrcl}
+            \blue{\alpha} & \blue{\in} & \blue{\text{addr}} & \blue{=} & \blue{\ldots} \\
+            \blue{bv} & \blue{\in} & \blue{\text{base-val}} & \blue{::=} & \blue{c \mid \alpha \mid \langle \lambda x.~ e, \rho \rangle \mid \star}\\
+            \blue{fv} & \blue{\in} & \blue{\text{facet-val}} & \blue{::=} & %% \blue{bv \mid \facet{\alpha}{fv}{fv}}
+            \\
+          \end{array}
+        \end{displaymath}
+      \end{minipage}
+    \end{tabular}
+    \\
+    \hfill \boxed{\blue{e, \rho, \sigma \Downarrow_{pc}^E \sigma, v}}
+    \\
+    \begingroup
+    \color{\colorMATH}
+    \begin{displaymath}
+      \begin{array}{c}
+        \begin{array}{cccc}
+          \inferrule[\textsc{Const}]{ }
+                    {c, \rho, \sigma \Downarrow_{pc}^E \sigma, c}
+                    & 
+                    \inferrule[\textsc{Var}]{ }
+                              {x, \rho, \sigma \Downarrow_{pc}^E \sigma, \rho(x)}
+                              & 
+                              \inferrule[\textsc{Lambda}]{ }
+                                        {\lambda x. ~ e, \rho, \sigma \Downarrow_{pc}^E \sigma, \langle \lambda x. ~ e, \rho \rangle}
+                                        &
+        \end{array}
+        \\
+        \begin{array}{ccc}
+          \inferrule[\textsc{Box}]
+                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \\\\
+                      \alpha \not\in dom(\sigma') \\\\
+                      \sigma'' = \sigma' [\alpha \mapsto \formfacet{pc}{v}{\star}]}
+                    {(\code{box} ~ e), \rho, \sigma \Downarrow_{pc}^E v, \sigma''}
+                    & 
+          \inferrule[\textsc{Unbox}]
+                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \\\\
+                     v' = \fcol{read(\sigma',v,pc)}}
+                    {(\code{unbox} ~e), \rho, \sigma \Downarrow_{pc}^E v', \sigma'}
+                    & 
+          \inferrule[\textsc{Set}]
+                    {e_1, \rho, \sigma \Downarrow_{pc}^E v_1, \sigma' \\\\
+                     e_2, \rho, \sigma' \Downarrow_{pc}^E v_2, \sigma'' \\\\
+                     \sigma''' = \fcol{write(\sigma'', v_1, pc, v_2)}}
+                    {(\code{set!} ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v_2}
+        \end{array}
+        \\
+        \begin{array}{ccc}
+          {\color{\colorFAC}
+          \inferrule[\textsc{Let-Label}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', v \\\\
+           \alpha \not\in dom(\sigma) \and \sigma' = \sigma [\alpha \mapsto v] \\\\
+           e_2, \rho [ \ell \mapsto \alpha ], \sigma' \Downarrow_{pc}^E \sigma'', v'}
+          {(\code{let-label} ~ \ell ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma'', v'}}
+          & 
+          {\color{\colorFAC}
+          \inferrule[\textsc{Fac-Create}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', l \\\\
+           e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
+           e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 }
+          {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', \formfacet{pc}{v_1}{v_2}}}
+          & 
+          {\color{\colorFAC}
+          \inferrule[\textsc{Obs}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
+           e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v  \\\\
+           \langle (\lambda x.~e), \rho' \rangle = \sigma''(\ell) \\\\
+           e_3, \rho' [x \mapsto v], \sigma'' \Downarrow_{pc}^E \sigma''', v'}
+          {(\code{obs} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''' v'}}
+        \end{array}
+      \end{array}
+    \end{displaymath}
+              %%\inferrule[]
+    \endgroup
+\end{figure*}
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{paper}
