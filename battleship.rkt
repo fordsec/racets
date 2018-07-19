@@ -76,7 +76,7 @@
         [(= (ship-length a-ship) 1)
          "Submarine"]
         [else
-         (displayln "not a ship supported by my Battleship game.")])
+         (displayln "Not a ship supported by my Battleship game, or it is empty sea.")])
       (raise "[get-ship-type] a-ship is not a ship struct.")))
 
 ; a helper function that checks the adjancency occupation around
@@ -314,31 +314,36 @@
 ; Return true and mark the corresponding part of the hits list of the ship
 ; as true if a part of the ship occupies the given row and column and it isn't sunk.
 ; Otherwise false.
-; not tested yet. Potential problematic!!!!
 (define (shoot-at row column an-ocean)
   (if (ocean-rep? an-ocean)
-      (if (and (< row 10) (>= row 0) (< column 10) (>= column 0))
-          (let* ([the-target-ship (array-ref (ocean-rep-ships-array an-ocean) row column)]
-                 [the-type-of-target (get-ship-type the-target-ship)])
-            (if (and (> (ship-length the-target-ship) 0) (not (is-sunk the-target-ship)))
-                (cond [(equal? the-type-of-target "Battleship")
-                       (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                   (ship row column 4 (is-horizontal the-target-ship) #t "H"))
-                       #t]
-                      [(equal? the-type-of-target "Cruiser")
-                       (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                   (ship row column 3 (is-horizontal the-target-ship) #t "H"))
-                       #t]
-                      [(equal? the-type-of-target "Destroyer")
-                       (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                   (ship row column 2 (is-horizontal the-target-ship) #t "H"))
-                       #t]
-                      [(equal? the-type-of-target "Submarine")
-                       (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                   (ship row column 1 (is-horizontal the-target-ship) #t "H"))
-                       #t])
-                #f))
-          #f)
+      (cond [(and (< row 10) (>= row 0) (< column 10) (>= column 0))
+             (let* ([the-target-ship (array-ref (ocean-rep-ships-array an-ocean) row column)]
+                    [the-type-of-target (get-ship-type the-target-ship)])
+               (cond [(and (> (ship-length the-target-ship) 0) (not (is-sunk the-target-ship)))
+                      (cond [(equal? the-type-of-target "Battleship")
+                             (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                         (ship row column 4 (is-horizontal the-target-ship) #t "H"))
+                             #t]
+                            [(equal? the-type-of-target "Cruiser")
+                             (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                         (ship row column 3 (is-horizontal the-target-ship) #t "H"))
+                             #t]
+                            [(equal? the-type-of-target "Destroyer")
+                             (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                         (ship row column 2 (is-horizontal the-target-ship) #t "H"))
+                             #t]
+                            [(equal? the-type-of-target "Submarine")
+                             (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                         (ship row column 1 (is-horizontal the-target-ship) #t "H"))
+                             #t])]
+                     [(equal? (ship-display the-target-ship) "H")
+                      (displayln "You have attacked that part of the ship already.")
+                      #f]
+                     [else (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                       (ship row column 1 (is-horizontal the-target-ship) #t "X"))
+                           #f]))]
+            [else (displayln "Illegal coordinate to fire at!")
+                  #f])
       (raise "an-ocean is not an ocean struct.")))
 
 ; Ocean struct
@@ -358,8 +363,9 @@
 ; At the same time we need to update the number of shots that have been fired,
 ; and the number of hits.
 ; not tested yet. Potential problematic!!!!
-(define (count-shoot-at row column an-ocean)
-  (shoot-at row column an-ocean))
+; not needed
+;(define (count-shoot-at row column an-ocean)
+;  (shoot-at row column an-ocean))
 
 ; get the number of shots fired in the ocean
 (define (get-shots-fired an-ocean)
@@ -389,7 +395,6 @@
 ;; Let's build the Battleship game now
 
 ; Initialize an ocean that has no ship at all
-; maybe create a box to wrap around it so that we have a reference???
 (define ocean (ocean-rep (make-array (shape 0 10 0 10) (ship 0 0 0 #t #f "O")) 0 0 0))
 
 ; The visualization of the ocean
@@ -441,49 +446,108 @@
 
   (displayln "To place the ships, you need to input \"place\", the type of the ship, row, column, and its orientation.")
   (displayln "Example: place Battleship 0 0 horizontal. But you cannot place more than 1 Battleship.")
+  (displayln "To fire at a coordinate, please input \"hit\", row and column ")
+  (displayln "If you fire on target, you can see \"H\" marked on the ocean board.")
+  (displayln "If you miss the shot, you can see \"X\" marked.")
   (define (run-game)
-    (let* ([player-input (read-line)]
-           [player-input-tokens (string-split player-input)])
-      (cond [(or (equal? (car player-input-tokens) "exit") (equal? (car player-input-tokens) "quit"))
-             (raise "Player exits the battleship game.")]
-            [(equal? (car player-input-tokens) "place")
-             ; first, need to check the number of ships the player can place
-             (cond [(> (sum-of-ships-placed num-of-ships-placed-p1) 0)
-                    ; ships placements for Battleship, Destroyer, Cruiser, and Submarine
-                    (cond [(equal? (second player-input-tokens) "Battleship")
-                           (cond [(<= (first num-of-ships-placed-p1) 0)
-                                  (displayln "No more Battleship for deployment.")]
-                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
-                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (first num-of-ships-placed-p1) 1)))
-                                           (void))])]
-                          [(equal? (second player-input-tokens) "Cruiser")
-                           (cond [(<= (second num-of-ships-placed-p1) 0)
-                                  (displayln "No more Cruiser for deployment.")]
-                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
-                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (second num-of-ships-placed-p1) 1)))
-                                           (void))])]
-                          [(equal? (second player-input-tokens) "Destroyer")
-                           (cond [(<= (third num-of-ships-placed-p1) 0)
-                                  (displayln "No more Destroyer for deployment.")]
-                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
-                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (third num-of-ships-placed-p1) 1)))
-                                           (void))])]
-                          [(equal? (second player-input-tokens) "Submarine")
-                           (cond [(<= (fourth num-of-ships-placed-p1) 0)
-                                  (displayln "No more Submarine for deployment.")]
-                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
-                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (fourth num-of-ships-placed-p1) 1)))
-                                           (void))])])]
-                   [else (displayln "All ships have been successfully deployed.")])]
-            [else (run-game)])
-      (newline)
-      (displayln "Now your ocean board looks like:")
-      (pretty-print ocean)
-      (run-game)
-      ))
+    (if (is-game-over ocean)
+        (raise "You have sunk every single ship. You win!")
+        (let* ([player-input (read-line)]
+               [player-input-tokens (string-split player-input)])
+          (cond [(equal? player-input "")
+                 (run-game)]
+                [else (if (or (equal? (car player-input-tokens) "exit") (equal? (car player-input-tokens) "quit"))
+                          (raise "Player exits the battleship game.")
+                          (cond [(> (sum-of-ships-placed num-of-ships-placed-p1) 0)
+                                 (cond [(equal? (car player-input-tokens) "place")
+                                        ;;;; ships deployment ;;;;
+                                        ; first, need to check the number of ships the player can place
+                                        (cond [(> (sum-of-ships-placed num-of-ships-placed-p1) 0)
+                                               ; ships placements for Battleship, Destroyer, Cruiser, and Submarine
+                                               (cond [(equal? (second player-input-tokens) "Battleship")
+                                                      (cond [(<= (first num-of-ships-placed-p1) 0)
+                                                             (displayln "No more Battleship for deployment.")]
+                                                            [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                                                      (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (first num-of-ships-placed-p1) 1)))
+                                                                      (void))])]
+                                                     [(equal? (second player-input-tokens) "Cruiser")
+                                                      (cond [(<= (second num-of-ships-placed-p1) 0)
+                                                             (displayln "No more Cruiser for deployment.")]
+                                                            [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                                                      (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 1 (- (second num-of-ships-placed-p1) 1)))
+                                                                      (void))])]
+                                                     [(equal? (second player-input-tokens) "Destroyer")
+                                                      (cond [(<= (third num-of-ships-placed-p1) 0)
+                                                             (displayln "No more Destroyer for deployment.")]
+                                                            [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                                                      (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 2 (- (third num-of-ships-placed-p1) 1)))
+                                                                      (void))])]
+                                                     [(equal? (second player-input-tokens) "Submarine")
+                                                      (cond [(<= (fourth num-of-ships-placed-p1) 0)
+                                                             (displayln "No more Submarine for deployment.")]
+                                                            [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                                                      (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 3 (- (fourth num-of-ships-placed-p1) 1)))
+                                                                      (void))])])]
+                                              [else (displayln "All ships have been successfully deployed.")])]
+                                       [(equal? (car player-input-tokens) "hit")]
+                                       [else 
+                                        (displayln "Invalid inputs.")])]
+                                ; here begins the battle after the ship deployment.
+                                [else (displayln "Let's battle begin!")
+                                      (cond [(and (equal? (car player-input-tokens) "hit")
+                                                  (number? (string->number (second player-input-tokens)))
+                                                  (number? (string->number (third player-input-tokens))))
+                                             (cond [(shoot-at (string->number (second player-input-tokens)) (string->number (third player-input-tokens)) ocean)
+                                                    (set! ocean (struct-copy ocean-rep ocean [ships-sunk (+ (ocean-rep-ships-sunk ocean) 1)]))]
+                                                   [else (displayln "You miss the shot!")])]
+                                            [else (displayln "Invalid input.")])]))
+                      (newline)
+                      (displayln "Now your ocean board looks like:")
+                      (pretty-print ocean)
+                      (run-game)]))))
   (run-game))
 
+(define (a-game-simulation-for-debugging-hit)
+  (displayln "The original ocean board")
+  (pretty-print ocean)
+  (newline)
+  (displayln "Let's place 10 ships for debugging hit and attack")
+  (place-ship-at 0 0 #t ocean "Battleship")
+  (place-ship-at 2 0 #t ocean "Cruiser")
+  (place-ship-at 4 0 #t ocean "Cruiser")
+  (place-ship-at 6 0 #t ocean "Destroyer")
+  (place-ship-at 8 0 #t ocean "Destroyer")
+  (place-ship-at 5 5 #t ocean "Destroyer")
+  (place-ship-at 0 9 #t ocean "Submarine")
+  (place-ship-at 2 9 #t ocean "Submarine")
+  (place-ship-at 4 9 #t ocean "Submarine")
+  (place-ship-at 6 9 #t ocean "Submarine")
+  (newline)
+  (displayln "Now the ocean board looks like:")
+  (pretty-print ocean)
+  (displayln "To fire at a coordinate, please input \"hit\", row and column ")
+  (displayln "If you fire on target, you can see \"H\" marked on the ocean board.")
+  (displayln "If you miss the shot, you can see \"X\" marked.")
+  (define (hit-and-fire)
+    (if (not (is-game-over ocean))
+        (let* ([player-input (read-line)]
+               [player-input-tokens (string-split player-input)])
+          (cond [(and (equal? (car player-input-tokens) "hit")
+                      (number? (string->number (second player-input-tokens)))
+                      (number? (string->number (third player-input-tokens))))
+                 (cond [(shoot-at (string->number (second player-input-tokens)) (string->number (third player-input-tokens)) ocean)
+                        (set! ocean (struct-copy ocean-rep ocean [ships-sunk (+ (ocean-rep-ships-sunk ocean) 1)]))]
+                       [else (displayln "You miss the shot!")])]
+                [else (displayln "Invalid input.")])
+          (displayln "Now the ocean board looks like:")
+          (pretty-print ocean)
+          (hit-and-fire))
+        (raise "You have sunk every single ship. You win!")))
+  (hit-and-fire))
+
 (game-on)
+;(a-game-simulation-for-debugging-hit)
+
 ;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
 ;; This may serve as the foundation of the battleship game
 ;; I will modify it to be completely different from the original code
