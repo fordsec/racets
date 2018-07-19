@@ -237,61 +237,71 @@
 
 ; place the ship at a particular location
 ; Need to be careful about the length of the ship
+; Return true if placing the ship is successful. Otherwise false.
 ; It seems to work now.
 (define (place-ship-at row column horizontal an-ocean a-ship)
   (if (and (ocean-rep? an-ocean))
-      (if (ok-to-place-ship-at row column horizontal an-ocean a-ship)
-          (if horizontal
-              ; place the ship according to the type of the ship
-              (cond [(equal? a-ship "Battleship")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                 (ship row column 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
-                                 (ship row (+ column 1) 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
-                                 (ship row (+ column 2) 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 3)
-                                 (ship row (+ column 3) 4 horizontal #f "B"))]
-                    [(equal? a-ship "Cruiser")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column
-                                 (ship row column 3 horizontal #f "C"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
-                                 (ship row (+ column 1) 3 horizontal #f "C"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
-                                 (ship row (+ column 2) 3 horizontal #f "C"))]
-                    [(equal? a-ship "Destroyer")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column
-                                 (ship row column 2 horizontal #f "D"))
-                     (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
-                                 (ship row (+ column 1) 2 horizontal #f "D"))]
-                    [(equal? a-ship "Submarine")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column
-                                 (ship row column 1 horizontal #f "S"))])
-              (cond [(equal? a-ship "Battleship")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                 (ship row column 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                 (ship (+ row 1) column 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
-                                 (ship (+ row 2) column 4 horizontal #f "B"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 3) column
-                                 (ship (+ row 3) column 4 horizontal #f "B"))]
-                    [(equal? a-ship "Cruiser")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                 (ship row column 3 horizontal #f "C"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                 (ship (+ row 1) column 3 horizontal #f "C"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
-                                 (ship (+ row 2) column 3 horizontal #f "C"))]
-                    [(equal? a-ship "Destroyer")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                 (ship row column 2 horizontal #f "D"))
-                     (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                 (ship (+ row 1) column 2 horizontal #f "D"))]
-                    [(equal? a-ship "Submarine")
-                     (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                 (ship row column 1 horizontal #f "S"))]))
-          (displayln "Illegal placement of the ship."))
+      (cond [(ok-to-place-ship-at row column horizontal an-ocean a-ship)
+             (if horizontal
+                 ; place the ship according to the type of the ship
+                 (cond [(equal? a-ship "Battleship")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                    (ship row column 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
+                                    (ship row (+ column 1) 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
+                                    (ship row (+ column 2) 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 3)
+                                    (ship row (+ column 3) 4 horizontal #f "B"))
+                        #t]
+                       [(equal? a-ship "Cruiser")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column
+                                    (ship row column 3 horizontal #f "C"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
+                                    (ship row (+ column 1) 3 horizontal #f "C"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
+                                    (ship row (+ column 2) 3 horizontal #f "C"))
+                        #t]
+                       [(equal? a-ship "Destroyer")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column
+                                    (ship row column 2 horizontal #f "D"))
+                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
+                                    (ship row (+ column 1) 2 horizontal #f "D"))
+                        #t]
+                       [(equal? a-ship "Submarine")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column
+                                    (ship row column 1 horizontal #f "S"))
+                        #t])
+                 (cond [(equal? a-ship "Battleship")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                    (ship row column 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
+                                    (ship (+ row 1) column 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
+                                    (ship (+ row 2) column 4 horizontal #f "B"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 3) column
+                                    (ship (+ row 3) column 4 horizontal #f "B"))
+                        #t]
+                       [(equal? a-ship "Cruiser")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                    (ship row column 3 horizontal #f "C"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
+                                    (ship (+ row 1) column 3 horizontal #f "C"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
+                                    (ship (+ row 2) column 3 horizontal #f "C"))
+                        #t]
+                       [(equal? a-ship "Destroyer")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                    (ship row column 2 horizontal #f "D"))
+                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
+                                    (ship (+ row 1) column 2 horizontal #f "D"))
+                        #t]
+                       [(equal? a-ship "Submarine")
+                        (array-set! (ocean-rep-ships-array an-ocean) row column 
+                                    (ship row column 1 horizontal #f "S"))
+                        #t]))]
+            [else (displayln "Illegal placement of the ship.")
+                  #f])
       (raise "[place-ship-at] an-ocean is not an ocean struct or a-ship is not a ship struct.")))
 
 ; check if the ship has been sunk or not by looking at the ship's hits list.
@@ -402,6 +412,16 @@
 (define (sum-of-ships-placed ship-num-list)
   (foldl + 0 ship-num-list))
 
+; a helper function for run-game to place the ship
+; Return true if placing ship is successful. Otherwise, display the message.
+(define (run-game-place-ship-helper player-input-tokens ocean)
+  (cond [(equal? (last player-input-tokens) "horizontal")
+         (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #t ocean (second player-input-tokens))]
+        [(equal? (last player-input-tokens) "vertical")
+         (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #f ocean (second player-input-tokens))]
+        [else (displayln "Illegal orientation")
+              #f]))
+
 ; a function that runs the game. It doesn't work with the web server yet.
 (define (game-on)
   (displayln "!!!Welcome to the Battleship game!!!")
@@ -428,14 +448,33 @@
              (raise "Player exits the battleship game.")]
             [(equal? (car player-input-tokens) "place")
              ; first, need to check the number of ships the player can place
-             (if (> (sum-of-ships-placed num-of-ships-placed-p1) 0)
-                 ; battleships placement
-                 (cond [(equal? (last player-input-tokens) "horizontal")
-                        (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #t ocean (second player-input-tokens))]
-                       [(equal? (last player-input-tokens) "vertical")
-                        (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #f ocean (second player-input-tokens))]
-                       [else (displayln "Illegal orientation")])
-                 (run-game))]
+             (cond [(> (sum-of-ships-placed num-of-ships-placed-p1) 0)
+                    ; ships placements for Battleship, Destroyer, Cruiser, and Submarine
+                    (cond [(equal? (second player-input-tokens) "Battleship")
+                           (cond [(<= (first num-of-ships-placed-p1) 0)
+                                  (displayln "No more Battleship for deployment.")]
+                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (first num-of-ships-placed-p1) 1)))
+                                           (void))])]
+                          [(equal? (second player-input-tokens) "Cruiser")
+                           (cond [(<= (second num-of-ships-placed-p1) 0)
+                                  (displayln "No more Cruiser for deployment.")]
+                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (second num-of-ships-placed-p1) 1)))
+                                           (void))])]
+                          [(equal? (second player-input-tokens) "Destroyer")
+                           (cond [(<= (third num-of-ships-placed-p1) 0)
+                                  (displayln "No more Destroyer for deployment.")]
+                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (third num-of-ships-placed-p1) 1)))
+                                           (void))])]
+                          [(equal? (second player-input-tokens) "Submarine")
+                           (cond [(<= (fourth num-of-ships-placed-p1) 0)
+                                  (displayln "No more Submarine for deployment.")]
+                                 [else (if (run-game-place-ship-helper player-input-tokens ocean)
+                                           (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (fourth num-of-ships-placed-p1) 1)))
+                                           (void))])])]
+                   [else (displayln "All ships have been successfully deployed.")])]
             [else (run-game)])
       (newline)
       (displayln "Now your ocean board looks like:")
@@ -444,7 +483,7 @@
       ))
   (run-game))
 
-
+(game-on)
 ;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
 ;; This may serve as the foundation of the battleship game
 ;; I will modify it to be completely different from the original code
