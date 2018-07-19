@@ -1,0 +1,328 @@
+\documentclass[review=true,acmlarge]{acmart}
+
+\usepackage{booktabs} % For formal tables
+\usepackage[linguistics]{forest}
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+\usepackage[ruled]{algorithm2e} % For algorithms
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\SetAlCapHSkip{0pt}
+\IncMargin{-\parindent}
+
+% Metadata Information
+%% \acmJournal{PACMHCI}
+%% \acmVolume{9}
+%% \acmNumber{4}
+%% \acmArticle{39}
+%% \acmYear{2010}
+%% \acmMonth{3}
+%% \acmArticleSeq{11}
+
+%\acmBadgeR[http://ctuning.org/ae/ppopp2016.html]{ae-logo}
+%\acmBadgeL[http://ctuning.org/ae/ppopp2016.html]{ae-logo}
+
+
+% Copyright
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+% DOI
+%\acmDOI{0000001.0000001}
+
+% Paper history
+%% \received{February 2007}
+%% \received{March 2009}
+%% \received[accepted]{June 2009}
+
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{racketlst}
+\usepackage{xspace}
+\lstset{basicstyle=\ttfamily,language=Racket,xleftmargin=.1\textwidth}
+\usepackage{letltxmacro}
+\newcommand*{\SavedLstInline}{}
+\LetLtxMacro\SavedLstInline\lstinline
+\DeclareRobustCommand*{\lstinline}{%
+  \ifmmode
+    \let\SavedBGroup\bgroup
+    \def\bgroup{%
+      \let\bgroup\SavedBGroup
+      \hbox\bgroup
+    }%
+  \fi
+  \SavedLstInline
+}
+
+%% To color math, put it in an \mc command, e.g., \mc{$a$}
+\newcommand{\colorMATH}{black!20!blue}
+\newcommand{\blue}[1] {{\color{\colorMATH} #1}}
+\newcommand{\bmth}[1] {{\color{\colorMATH} $#1$}}
+\newcommand{\code}[1]{\lstinline{#1}}
+
+\newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
+\newcommand{\zw}[1]{\comm[\color{green!66!black}]{Zhanpeng}{#1}}
+\newcommand{\kris}[1]{\comm[\color{blue}]{Kris}{#1}}
+\newcommand{\tom}[1]{\comm[\color{orange}]{Tom}{#1}}
+\newcommand{\lang}[0]{$\lambda_\textsc{FE}$\xspace}
+\newcommand{\facet}[3]{\blue{${\langle \, {#1} \: ? \: {#2} \diamond \: {#3} \, \rangle}$}}
+
+
+\begin{document}
+
+\title{Racets: Embedding Policy{-}Agnostic Programming in Racket}
+
+\author{Kristopher Micinski}
+\affiliation{%
+  \institution{Haverford College}
+  \city{Haverford}
+  \state{PA}
+  \postcode{19041}
+  \country{USA}}
+\email{kris@cs.haverford.edu}
+\author{Zhanpeng Wang}
+\affiliation{%
+  \institution{Haverford College}
+  \city{Haverford}
+  \state{PA}
+  \postcode{19041}
+  \country{USA}
+}
+\email{zwang10@haverford.edu}
+\author{Thomas Gilray}
+\affiliation{%
+ \institution{University of Alabama}
+ \city{Birmingham}
+ \state{AL}
+ \country{USA}}
+\email{gilray@uab.edu}
+
+\begin{abstract}lorem ipsum...\end{abstract}
+
+%% \begin{CCSXML}
+%% <ccs2012>
+%%  <concept>
+%%   <concept_id>10010520.10010553.10010562</concept_id>
+%%   <concept_desc>Computer systems organization~Embedded systems</concept_desc>
+%%   <concept_significance>500</concept_significance>
+%%  </concept>
+%%  <concept>
+%%   <concept_id>10010520.10010575.10010755</concept_id>
+%%   <concept_desc>Computer systems organization~Redundancy</concept_desc>
+%%   <concept_significance>300</concept_significance>
+%%  </concept>
+%%  <concept>
+%%   <concept_id>10010520.10010553.10010554</concept_id>
+%%   <concept_desc>Computer systems organization~Robotics</concept_desc>
+%%   <concept_significance>100</concept_significance>
+%%  </concept>
+%%  <concept>
+%%   <concept_id>10003033.10003083.10003095</concept_id>
+%%   <concept_desc>Networks~Network reliability</concept_desc>
+%%   <concept_significance>100</concept_significance>
+%%  </concept>
+%% </ccs2012>
+%% \end{CCSXML}
+
+%% \ccsdesc[500]{Computer systems organization~Embedded systems}
+%% \ccsdesc[300]{Computer systems organization~Redundancy}
+%% \ccsdesc{Computer systems organization~Robotics}
+%% \ccsdesc[100]{Networks~Network reliability}
+
+\keywords{security, faceted execution, information flow, macros}
+
+\maketitle
+
+\renewcommand{\shortauthors}{Micinski, Wang, and Gilray}
+
+\section{Introduction}
+
+As our systems become more interconnected, they consume an
+ever-growing amount of data.  System designers communicate to users
+how their data is used via a \emph{privacy policy}. Unfortunately,
+implementing these policies correctly is challenging: users often have
+partial control over the policy (e.g., whether their phone number is
+publicly visible or private) and policies change frequently (e.g.,
+after new laws are passed). As policies evolve, developers face
+massive (re)engineering efforts to ensure that implementations match
+the espoused policy.
+
+\emph{Policy-agnostic programming} is a linguistic paradigm that
+decouples the implementation of privacy policies from the code that
+operates on sensitive data. This frees developers to write programs as
+they would normally, without inserting logic to manage the policy
+directly into application code. Instead, data is labeled with its
+policy as it enters the system, and propagates through the program as
+computation progresses. Policy-agnostic programming is often
+implemented using faceted execution, a dynamic information-flow
+monitor encoding sensitive values as \emph{facets}: decision trees
+specifying different views of that data. For example, the facet
+\facet{Alice}{\code{#t}}{\code{#f}} represents a value that should
+appear to Alice as \code{#t} and to everyone but Alice as \blue{\code{#f}}.
+
+Faceted execution propagates facets by extending core linguistic
+primitives (such as function application). For example, consider the
+application \code{(not x)} where \code{x} is
+\blue{\facet{Alice}{\code{#t}}{\code{#f}}}. The programmer intends the
+call to \code{not} to be operating on a \code{boolean?}, but because
+\code{x} is a facet this call produces \code{#f} instead. The correct
+way to interpret function application on facets is to distribute the
+application through each branch, producing %% \code{m
+  %% \mc{ \facet{Alice}{\code{#f}}{\code{not #t}}}}
+. Other core forms
+(such as \code{if}, \code{cond}, etc...) require similar changes.
+
+The core linguistic changes required by faceted execution have led to
+relatively inelegant and heavyweight implementations thusfar. For
+example, Flanagan et. al (who first presented faceted execution)
+extended the JavaScript runtime to account for faceted
+values. Similarly, the Jeeves programming language does (what does it
+do?). By contrast, Racket's highly-expressive macro system allows even
+core forms (such as \code{#\%app}) to be redefined with relative ease.
+
+In this paper we present Racets, an implementation of policy-agnostic
+programming in Racket via macros. Racets provides facilities for
+creating policies and faceting secure data with those policies. Racets
+also extends several core forms in Racket to work with faceted
+values (our implementation is detailed in Section~\ref{sec:implementation}). We
+have measured the overhead of Racets in several microbenchmarks, and
+have used Racets to implement a small server-based
+board-game (detailed in Section~\ref{sec:evaluation}). We see Racets as a
+promising prototype for policy-agnostic programming in Racket, and
+conclude with several future directions in Section~\ref{sec:conclusion}.
+
+\section{Overview of Faceted Execution}
+
+To introduce our setting we present the implementation of Battleship,
+a small guessing-based board game, in Racets (this section presents a
+distilled version of our case study in
+Section~\ref{sec:case-study}). In this game each player has a
+grid-based board on which they place tiles (or ``ships''). The players
+hide their boards from each other as play progresses in rounds. Each
+turn a player guesses the position of a tile on the other player's
+board. If the guess is successful that tile is removed from the
+board. Play ends once one player's board has no remaining tiles, at
+which point that player loses.
+
+We implement game boards as lists of cons cells representing the
+\blue{$(x,y)$} coordinates of ships. Board creation is simply the empty
+list, and adding a piece is done via \lstinline|cons|:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=example]
+(define (makeboard) '())
+(define (add-piece board x y) (cons (cons x y) board))
+\end{lstlisting}
+
+Next we define \code{mark-hit}, which takes a player's board and
+removes a piece if the guessed coordinate is present. We 
+return a pair of the updated board and a boolean indicating
+whether the guess was a hit:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=example]
+(define (mark-hit board x y)
+  (if (null? board)
+      (cons board #f)
+      (let* ([fst (car board)]
+             [rst (cdr board)])
+        (if (and (= (car fst) x)
+                 (= (cdr fst) y))
+            (cons rst #t)
+            (let ([rst+b (mark-hit rst x y)])
+              (cons (cons fst
+                          (car rst+b))
+                    (cdr rst+b)))))))
+\end{lstlisting}
+
+Although \code{mark-hit} will operate on sensitive data (the game
+boards), it is written without any special machinery to maintain the
+secrecy of \code{board}. Protecting data {w.r.t.} policies is instead handled
+automatically and implicitly by a runtime monitor.
+When Alice and Bob want to play a game, they both create a
+\emph{label} to protect their data. A label is a predicate that takes
+an argument and, if it returns true, reveals a secret. Alice's label
+is used to annotate whatever data she wants to be kept
+secret. Supposing Alice chooses to be player 1, she will use the
+following label:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=example]
+(define alice-label (let-label l (lambda (x) (= 1 x))) l)
+\end{lstlisting}
+
+Bob would use a similar label (but with 2 instead of 1). At runtime,
+the \code{label} form creates a label \blue{$\ell_{A}$} and returns it
+to the binding for \code{alice-label}. When Alice wants to protect a
+value, she creates a facet annotated with her label and two
+\emph{branches}. The positive (left) branch represents the value as it
+should appear to her, and the negative (right) to everyone else:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=example]
+  (define alice-board
+          (facet alice-label (add-pieces (makeboard) x|$_1$| y|$_1$| |$...$|) star))
+\end{lstlisting}
+
+In the above example, Alice uses \blue{$\star$} (lazy failure) to
+represent that others should see nothing if they observe the data. In
+other applications, she might choose a more sensible default value to
+reveal to others. She may even want to create a \emph{nested}
+facet. For example, in a social-networking application she may want a
+nested facet consisting of two labels for
+\blue{$\ell_{\text{Friends}}$} and \blue{$\ell_{\text{Family}}$}. She
+would present three views of her social-media profile: \bmth{p_1} to
+her family, containing her phone number and other contact information,
+\bmth{p_2} to her friends showing her interests, and \bmth{p_3} to
+everyone else, showing only her name and email.
+
+\begingroup
+\begin{gather*}
+\pgfkeys{/pgf/inner sep=0pt} \pgfkeys{/pgf/inner xsep=0pt}
+  \begin{forest}
+    l sep=0,s sep=1em,
+    for children={l sep=0,s sep=1em},
+    [\bmth{\ell_{\text{Family}}} [\bmth{p_1}] [\bmth{\ell_{\text{Friends}}} [\bmth{p_2}] [\bmth{p_3}]]]
+  \end{forest}
+\end{gather*}
+\endgroup
+
+As play of the game progresses, Alice and Bob both make guesses, and a
+driver calls the function \code{mark-hit} with each of their (faceted)
+game boards. However, because Alice and Bob's game boards are both
+facets, \code{mark-hit} cannot be immediately applied, as the argument
+\code{board} is a facet. Faceted execution ``splits'' the execution of
+the function on faceted arguments, running it first on the positive
+branch, then again on the negative branch. Finally, the results of
+each branch are merged to produce a facet:
+
+%% \begin{center}
+%%   \begin{tikzpicture}
+%% 	  \node (0) at (0, 1) {\lstinline|(mark-hit |{\color{\colorMATH}\(\facet{\ell_A}{v^+}{v^-} ~~ x ~~y\)}\lstinline|)|};
+%% 	  \node (1) at (2, 0)  {\lstinline|(mark-hit |{\color{\colorMATH}\(v^- ~~ x ~~ y\)}\lstinline|)|{\color{\colorMATH}\(~~= v''\)}};
+%% 	  \node (2) at (-2, 0) {\lstinline|(mark-hit |{\color{\colorMATH}\(v^+ ~~ x ~~ y\)}\lstinline|)|{\color{\colorMATH}\(~~= v'\)}};
+%% 	  \node (3) at (0, -1) {{\color{\colorMATH}\(\facet{\ell_A}{v'}{v''}\)}};
+%% 	  \draw [->] (0) edge (1);
+%% 	  \draw [->] (0) edge (2);
+%% 	  \draw [->] (1) edge (3);
+%% 	  \draw [->] (2) edge (3);
+%%   \end{tikzpicture}
+%% \end{center}
+
+Because the applied function could be stateful, faceted execution also
+records the current privilege level in a \emph{program counter}. The
+program counter is used to build facets when writes are made to the
+store inside of a privileged context. We expand upon these subtleties
+in Section~\ref{sec:semantics}, where we present a full semantics for
+faceted execution.
+
+\kris{Stuff about obs here..}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{paper}
+
+\end{document}

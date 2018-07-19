@@ -1,11 +1,10 @@
-paper.pdf: paper.scrbl
-	scribble --latex paper.scrbl
-	xelatex -interaction nonstopmode -file-line-error paper.tex
-
-paper.html: paper.scrbl
-	scribble paper.scrbl
+paper.pdf: paper.tex
+	xelatex paper.tex
+	bibtex paper
+	xelatex paper.tex
+	xelatex paper.tex
 
 clean:
-	rm *.css *.js *.tex *.out *.pdf *.aux *.cls *.html
+	rm *.out *.pdf *.aux *.cls 
 
 .PHONY: clean
