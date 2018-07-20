@@ -180,7 +180,7 @@ application \code{(not x)} where \code{x} is
 call to \code{not} to be operating on a \code{boolean?}, but because
 \code{x} is a facet this call produces \code{#f} instead. The correct
 way to interpret function application on facets is to distribute the
-application through each branch, producing %% \code{m
+application through each branch, producing \zw{producing ...?} %% \code{m
   %% \mc{ \facet{Alice}{\code{#f}}{\code{not #t}}}}
 . Other core forms
 (such as \code{if}, \code{cond}, etc...) require similar changes.
@@ -190,7 +190,8 @@ relatively inelegant and heavyweight implementations thusfar. For
 example, Flanagan et. al (who first presented faceted execution)
 extended the JavaScript runtime to account for faceted
 values. Similarly, the Jeeves programming language does (what does it
-do?). By contrast, Racket's highly-expressive macro system allows even
+do?)\zw{Need to complete this sentence}. By contrast, Racket's 
+highly-expressive macro system allows even
 core forms (such as \code{#\%app}) to be redefined with relative ease.
 
 In this paper we present Racets, an implementation of policy-agnostic
@@ -351,8 +352,24 @@ facets. Our presentation largely mirrors that of Austin et
 al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
 Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
 calculus with references (which have interact with facets in a subtle
-way) and three forms unique to faceted execution: label creation,
-facet construction, and facet observation.
+way) and three forms unique to faceted execution: facet construction, 
+label creation, and facet observation.
+
+\zw{Facet construction allows the users to construct a facet value that
+consists of a policy, a private/positive variable that can be a basic value
+or another facet value but is hidden away from other users, and a public/negative 
+variable. }
+
+\zw{Label creation dynamically creates a label binding to a given policy.
+A policy consists of a policy variable and a policy body/expression. 
+When a lable is invoked in the faceted executions, the policy will be called
+to evaluate the given faceted value. When the policy is invoked, the policy
+body (e.g. lambda function) evaluates to a boolean, which indicates whether
+to observe the positive or the negative branch of a faceted value. This allows
+the users to protect their data via choosing what data to be seen by others and 
+hiding the sensitive data.}
+
+\zw{Facet observation }
 
 \begin{figure*}
     \begin{tabular}{cc}
