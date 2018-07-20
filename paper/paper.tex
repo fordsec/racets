@@ -49,7 +49,7 @@
 \usepackage{listings}
 \usepackage{racketlst}
 \usepackage{xspace}
-\lstset{basicstyle=\ttfamily,language=Racket,xleftmargin=.1\textwidth}
+\lstset{language=Racket,xleftmargin=.1\textwidth,escapeinside={<@}{@>}}
 \usepackage{letltxmacro}
 \newcommand*{\SavedLstInline}{}
 \LetLtxMacro\SavedLstInline\lstinline
@@ -328,6 +328,7 @@ faceted execution.
 \kris{Stuff about obs here..}
 
 \section{A Formal Semantics for Faceted Execution}
+\label{sec:semantics}
 
 \begin{figure}
 \begin{displaymath}
@@ -582,17 +583,17 @@ Facet creation appears as three separate rules in
 Figure~\ref{fig:semantics}, which we recapitulate here in three
 distint colors for each case:
 
-\[
+\[\small
 \begin{array}{ccc}
   {\color{brown}
-    \inferrule[\textsc{Fac-Create-Left}]
+    \inferrule[\textsc{Fac-Create-Pos}]
               {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
                 \boxed{+ \ell \in pc} \\\\
                 e_2, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
               {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
   & 
   {\color{gray}
-    \inferrule[\textsc{Fac-Create-Right}]
+    \inferrule[\textsc{Fac-Create-Neg}]
               {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
                 \boxed{- \ell \in pc} \\\\
                 e_3, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
@@ -611,40 +612,134 @@ distint colors for each case:
 \end{array}
 \]
 
-Translating these rules to Racket involves observing that each of
-these rules will apply under one of three disjoint circumstances (each
-of them boxed in the above rules): $+\ell \in pc$, $-\ell \in pc$, or
-else $\{+\ell,-\ell\} \cap pc = \varnothing$. This leads to a
-relatively straightforward implementation that inspects the current
-program counter to decide which rule to implement:
+Translating these rules to Racket involves observing that each one
+will apply under one of three disjoint circumstances (each of them
+boxed in the above rules): \bmth{+\ell \in pc}, \bmth{-\ell \in pc},
+or else \bmth{\{+\ell,-\ell\} \cap pc = \varnothing}. This is a common
+idiom in our faceted semantics, as we often want to select the
+appropriate branch of a facet if its label already exists in
+\bmth{pc}.
 
-\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+At first glance, it may not be obvious that we even \emph{need} a maco
+for facet creation. But according to our semantics, the following
+snippet should produce \code{#t} if \bmth{+\ell \in pc}:
+
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=other,numbers=none]
+(fac l #t (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
+\end{lstlisting}
+
+If we were to implement \code{fac} as a function, it would force
+evaluation of the negative branch, inconsistent with the semantics of
+\textsc{Fac-Create-Pos}. We can implement each of these conditions as
+a Racket macro by considering whether \bmth{\ell \in pc}, as shown in
+Figure~\ref{fig:fac-create}. Each color in the listing corresponds to
+the analogous semantic rule. The implementation of
+\textsc{Fac-Create-Pos} and \textsc{Fac-Create-Neg} is relatively
+straightforward, but \textsc{Fac-Create-Split} extends \bmth{pc} for
+each branch and subsequently forms a facet. This function implements
+canonicalizing facet construction, and (as the implementation is a
+transliteration of that in Figure 6 of Austin et
+al.~\cite{Austin:2012}) we omit its definition here.
+
+\begin{figure}
+{\small
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets]
 (define-syntax-rule (fac l e1 e2)
   (cond
-|{\color{brown}|    [(set-member? (current-pc) (pos (facet-labelname l))) e1] |}|
-|{\color{gray}|    [(set-member? (current-pc) (neg (facet-labelname l))) e2]  |}|
+\end{lstlisting}
+\vspace{-.7\baselineskip}
+{\color{brown}
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets,identifierstyle=\color{brown}]
+    [(set-member? (current-pc) (pos (facet-labelname l))) e1]
+\end{lstlisting}
+}
+\vspace{-.7\baselineskip}
+{\color{gray}
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets,identifierstyle=\color{gray}]
+    [(set-member? (current-pc) (neg (facet-labelname l))) e2]
+\end{lstlisting}
+}
+\vspace{-.7\baselineskip}
+{\small\color{purple}
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets,identifierstyle=\color{purple},keywordstyle=\color{purple}]
+    [else
+     (let ([left (parameterize
+                     ([current-pc (set-add (current-pc)
+                                           (pos (facet-labelname l)))]))]
+           [right (parameterize
+                      ([current-pc (set-add (current-pc)
+                                            (neg (facet-labelname l)))]))]
+           (mkfacet (labelpair-name l) v1 v2)))]))
+\end{lstlisting}}
+\caption{Facet creation as a macro}
+\label{fig:fac-create}
+\end{figure}
 
-|{\color{purple}|    [else
-     (let ([left
-            (parameterize ([current-pc (set-add (current-pc)
-                                                (pos (facet-labelname l)))]))]
-           [right
-            (parameterize ([current-pc (set-add (current-pc)
-                                                (neg (facet-labelname l)))]))]
-           (mkfacet (labelpair-name l) v1 v2)))])) |}|
+\paragraph*{Label Creation}
+
+As we chose a representation of labels as pairs of symbols (the
+label's name) and closures (the predicate corresponding to the label),
+label creation is relatively straightforward from the semantics:
+
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets]
+(define-syntax-rule (let-label l (lambda xs e) body)
+  (let ([l (labelpair (gensym 'lab)
+                      (lambda xs e))])
+    body))
 \end{lstlisting}
 
+\paragraph*{Faceted References}
 
-As our definition is a transliteration of that in Figure 6 of Austin
-et. al's paper~\cite{Austin:2012}, we omit the implementation here.
-The result is a function, \code{mkfacet}, which (given a label and
-both positive and negative branches) forms a facet:
+Our faceted semantics includes explicit \code{box} and \code{unbox}
+forms. This differs from Racket's semantics, where any variable may be
+treated as a box due to assignment conversion. We have two main
+options:
 
-\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
-(define (mkfacet label v1 v2)
-  (canonicalize (set-add (current-pc) (pos name)) v1 v2))
-\end{lstlisting}
+\begin{itemize}
+\item Introduce an explicit \code{unbox} form in Racets, trusting the
+  programmer to explicitly use our implementation of \code{unbox} on
+  potentially-faceted objects.
 
+\item Walk over Racket code (after macro-expansion via
+  \code{local-expand}) transforming variable references to use
+  explicit \code{unbox} forms from Racets.
+\end{itemize}
+
+For our prototype of Racets, we have chosen to implement the
+first. This leads to a relatively simple implementation, but
+essentially trusts the programmer to use Racets' \code{unbox} forms
+when necessary.
+
+
+\begin{figure}
+(define-syntax (ref-set! stx)
+  (syntax-case stx ()
+    [(_ var e)
+     #`(let ([value e])
+         (let setf ([var var]
+                    [pc (current-pc)])
+           (if (box? var)
+               ; if var is a facet value
+               (set-box! var (construct-facet-optimized (set->list (current-pc)) value (unbox var)))
+               ; else
+               (mkfacet
+                (facet-labelname (unbox var))
+                (setf
+                 (facet-left (unbox var))
+                 (set-add pc (pos (facet-labelname var))))
+                (setf
+                 (facet-right (unbox var))
+                 (set-add pc (neg (facet-labelname var))))))))]))
+\caption{Racets' implementation of \code{set!}}
+\label{fig:setbang}
+\end{figure}
+
+Racets defines its \code{box} macro, along with \code{unbox} and
+\code{set!}. We include the definition of \code{set!} in
+Figure~\ref{fig:setbang}, which inlines the definition of the
+\textit{write} metafunction from Section~\ref{sec:semantics} to
+consider the case under which a facet is used when an address is
+expected.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{paper}
