@@ -396,59 +396,59 @@ facet construction, and facet observation.
           \inferrule[\textsc{Lambda}]{ }
                                      {\lambda x. ~ e, \rho, \sigma \Downarrow_{pc}^E \sigma, \langle \lambda x. ~ e, \rho \rangle}
                     &
-          \inferrule[\textsc{Apply}]{e_1, \rho, \sigma \Downarrow_{pc}^E v_1, \sigma' \and
-                                     e_2, \rho, \sigma' \Downarrow_{pc}^E v_2, \sigma'' \\\\
-                                     \fcol{(v_1 v_2), \rho, \sigma'' \Downarrow_{pc}^A \sigma''', v'}}
+          \inferrule[\textsc{Apply}]{e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', v_1 \and
+                                     e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v_2 \\\\
+                                     \fcol{(v_1 ~ v_2), \rho, \sigma'' \Downarrow_{pc}^A \sigma''', v'}}
                                     {(e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v'}
         \end{array}
        \endgroup
-        \\
+        \\\\
         \begingroup
         \color{\colorMATH}
         \begin{array}{ccc}
           \inferrule[\textsc{Box}]
-                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \and
+                    {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \and
                       \alpha \not\in dom(\sigma') \\\\
                       \sigma'' = \sigma' [\alpha \mapsto \formfacet{pc}{v}{\star}]}
-                    {(\code{box} ~ e), \rho, \sigma \Downarrow_{pc}^E v, \sigma''}
+                    {(\code{box} ~ e), \rho, \sigma \Downarrow_{pc}^E \sigma'', \alpha}
                     & 
           \inferrule[\textsc{Unbox}]
-                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \\\\
+                    {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \\\\
                      v' = \fcol{\var{read}(\sigma',v,pc)}}
-                    {(\code{unbox} ~e), \rho, \sigma \Downarrow_{pc}^E v', \sigma'}
+                    {(\code{unbox} ~e), \rho, \sigma \Downarrow_{pc}^E \sigma', v'}
                     & 
           \inferrule[\textsc{Set}]
-                    {e_1, \rho, \sigma \Downarrow_{pc}^E v_1, \sigma' \and
-                     e_2, \rho, \sigma' \Downarrow_{pc}^E v_2, \sigma'' \\\\
+                    {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', v_1 \and
+                     e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v_2 \\\\
                      \sigma''' = \fcol{\var{write}(\sigma'', v_1, pc, v_2)}}
                     {(\code{set!} ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v_2}
         \end{array}
        \endgroup
-       \\
+       \\\\
        \hfill \textit{(Facet Creation)}
        \\
        \begin{array}{ccc}
           {\color{\colorFAC}
           \inferrule[\textsc{Fac-Create-Split}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
-            \{+\ell, -\ell\} \cup pc = \varnothing \\\\
+            \{+\ell, -\ell\} \cap pc = \varnothing \\\\
            e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
            e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
            v = \formfacet{pc}{v_1}{v_2}}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
           {\color{\colorFAC}
-          \inferrule[\textsc{Fac-Create-Left}]
+          \inferrule[\textsc{Fac-Create-Pos}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
            + \ell \in pc \\\\
-           e_2, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+           e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
           & 
           {\color{\colorFAC}
-          \inferrule[\textsc{Fac-Create-Right}]
+          \inferrule[\textsc{Fac-Create-Neg}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
            - \ell \in pc \\\\
-           e_3, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+           e_3, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}     \end{array}
 
       \end{array}
@@ -472,12 +472,12 @@ facet construction, and facet observation.
                       \langle (\lambda x.~e), \rho' \rangle = \sigma''(\ell) \\\\
                       e, \rho' [x \mapsto v], \sigma'' \Downarrow_{pc}^E \sigma''', v^{\pm} \\\\
                       e_3, \rho, \sigma''' \Downarrow_{pc}^E \sigma'''', v' \\\\
-                      v'' = \fcol{\var{obs}(\ell, pc, v', v^{\pm})}}
+                      v'' = \fcol{\var{obs}(\ell, v', v^{\pm})}}
                     {(\code{obs} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'''', v''}}
     \end{array}
     \]
     \\
-    \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
+    \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v_1 ~ v_2), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
     \\
     \begingroup
     \color{\colorMATH}
@@ -504,6 +504,7 @@ facet construction, and facet observation.
         \end{array}
         \\
         \begin{array}{cc}
+        \\\\
           {\color{\colorFAC}
           \inferrule[\textsc{App-Facet-Pos}]
           {+\ell \in pc \\\\
@@ -516,6 +517,33 @@ facet construction, and facet observation.
             (v^- ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}
           {(\facet{\ell}{v^+}{v^-} ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}}
         \end{array}
+      \end{array}
+    \end{displaymath}
+    \\
+    \newpage
+    \hfill \textit{(Metafunctions)}
+    \\
+    \begin{displaymath}
+      \begin{array}{rclrr}
+        {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
+        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
+        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
+        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
+      \end{array}
+    \end{displaymath}
+    \begin{displaymath}
+      \begin{array}{rclrr}
+        {write(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
+        {write(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = write(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
+        & & & \textit{and} ~ {\sigma'' = write(\sigma', v_2, pc \cup \{-\ell\}, v)}
+      \end{array}
+    \end{displaymath}
+    \begin{displaymath}
+      \begin{array}{rclrr}
+        {obs(\ell, b, bv)} & {=} & {bv} & & \\
+        {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
+        {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
+        {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
       \end{array}
     \end{displaymath}
               %%\inferrule[]
