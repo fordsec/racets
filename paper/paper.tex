@@ -180,7 +180,7 @@ application \code{(not x)} where \code{x} is
 call to \code{not} to be operating on a \code{boolean?}, but because
 \code{x} is a facet this call produces \code{#f} instead. The correct
 way to interpret function application on facets is to distribute the
-application through each branch, producing %% \code{m
+application through each branch, producing \zw{producing ...?} %% \code{m
   %% \mc{ \facet{Alice}{\code{#f}}{\code{not #t}}}}
 . Other core forms
 (such as \code{if}, \code{cond}, etc...) require similar changes.
@@ -190,7 +190,8 @@ relatively inelegant and heavyweight implementations thusfar. For
 example, Flanagan et. al (who first presented faceted execution)
 extended the JavaScript runtime to account for faceted
 values. Similarly, the Jeeves programming language does (what does it
-do?). By contrast, Racket's highly-expressive macro system allows even
+do?)\zw{Need to complete this sentence}. By contrast, Racket's 
+highly-expressive macro system allows even
 core forms (such as \code{#\%app}) to be redefined with relative ease.
 
 In this paper we present Racets, an implementation of policy-agnostic
@@ -352,8 +353,24 @@ facets. Our presentation largely mirrors that of Austin et
 al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
 Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
 calculus with references (which have interact with facets in a subtle
-way) and three forms unique to faceted execution: label creation,
-facet construction, and facet observation.
+way) and three forms unique to faceted execution: facet construction, 
+label creation, and facet observation.
+
+\zw{Facet construction allows the users to construct a facet value that
+consists of a policy, a private/positive variable that can be a basic value
+or another facet value but is hidden away from other users, and a public/negative 
+variable. }
+
+\zw{Label creation dynamically creates a label binding to a given policy.
+A policy consists of a policy variable and a policy body/expression. 
+When a lable is invoked in the faceted executions, the policy will be called
+to evaluate the given faceted value. When the policy is invoked, the policy
+body (e.g. lambda function) evaluates to a boolean, which indicates whether
+to observe the positive or the negative branch of a faceted value. This allows
+the users to protect their data via choosing what data to be seen by others and 
+hiding the sensitive data.}
+
+\zw{Facet observation }
 
 \begin{figure*}
     \begin{tabular}{cc}
@@ -397,59 +414,59 @@ facet construction, and facet observation.
           \inferrule[\textsc{Lambda}]{ }
                                      {\lambda x. ~ e, \rho, \sigma \Downarrow_{pc}^E \sigma, \langle \lambda x. ~ e, \rho \rangle}
                     &
-          \inferrule[\textsc{Apply}]{e_1, \rho, \sigma \Downarrow_{pc}^E v_1, \sigma' \and
-                                     e_2, \rho, \sigma' \Downarrow_{pc}^E v_2, \sigma'' \\\\
-                                     \fcol{(v_1 v_2), \rho, \sigma'' \Downarrow_{pc}^A \sigma''', v'}}
+          \inferrule[\textsc{Apply}]{e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', v_1 \and
+                                     e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v_2 \\\\
+                                     \fcol{(v_1 ~ v_2), \rho, \sigma'' \Downarrow_{pc}^A \sigma''', v'}}
                                     {(e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v'}
         \end{array}
        \endgroup
-        \\
+        \\\\
         \begingroup
         \color{\colorMATH}
         \begin{array}{ccc}
           \inferrule[\textsc{Box}]
-                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \and
+                    {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \and
                       \alpha \not\in dom(\sigma') \\\\
                       \sigma'' = \sigma' [\alpha \mapsto \formfacet{pc}{v}{\star}]}
-                    {(\code{box} ~ e), \rho, \sigma \Downarrow_{pc}^E v, \sigma''}
+                    {(\code{box} ~ e), \rho, \sigma \Downarrow_{pc}^E \sigma'', \alpha}
                     & 
           \inferrule[\textsc{Unbox}]
-                    {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \\\\
+                    {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \\\\
                      v' = \fcol{\var{read}(\sigma',v,pc)}}
-                    {(\code{unbox} ~e), \rho, \sigma \Downarrow_{pc}^E v', \sigma'}
+                    {(\code{unbox} ~e), \rho, \sigma \Downarrow_{pc}^E \sigma', v'}
                     & 
           \inferrule[\textsc{Set}]
-                    {e_1, \rho, \sigma \Downarrow_{pc}^E v_1, \sigma' \and
-                     e_2, \rho, \sigma' \Downarrow_{pc}^E v_2, \sigma'' \\\\
+                    {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', v_1 \and
+                     e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v_2 \\\\
                      \sigma''' = \fcol{\var{write}(\sigma'', v_1, pc, v_2)}}
                     {(\code{set!} ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v_2}
         \end{array}
        \endgroup
-       \\
+       \\\\
        \hfill \textit{(Facet Creation)}
        \\
        \begin{array}{ccc}
           {\color{\colorFAC}
           \inferrule[\textsc{Fac-Create-Split}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
-            \{+\ell, -\ell\} \cup pc = \varnothing \\\\
+            \{+\ell, -\ell\} \cap pc = \varnothing \\\\
            e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
            e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
            v = \formfacet{pc}{v_1}{v_2}}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
           {\color{\colorFAC}
-          \inferrule[\textsc{Fac-Create-Left}]
+          \inferrule[\textsc{Fac-Create-Pos}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
            + \ell \in pc \\\\
-           e_2, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+           e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
           & 
           {\color{\colorFAC}
-          \inferrule[\textsc{Fac-Create-Right}]
+          \inferrule[\textsc{Fac-Create-Neg}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
            - \ell \in pc \\\\
-           e_3, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+           e_3, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}     \end{array}
 
       \end{array}
@@ -473,12 +490,12 @@ facet construction, and facet observation.
                       \langle (\lambda x.~e), \rho' \rangle = \sigma''(\ell) \\\\
                       e, \rho' [x \mapsto v], \sigma'' \Downarrow_{pc}^E \sigma''', v^{\pm} \\\\
                       e_3, \rho, \sigma''' \Downarrow_{pc}^E \sigma'''', v' \\\\
-                      v'' = \fcol{\var{obs}(\ell, pc, v', v^{\pm})}}
+                      v'' = \fcol{\var{obs}(\ell, v', v^{\pm})}}
                     {(\code{obs} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'''', v''}}
     \end{array}
     \]
     \\
-    \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
+    \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v_1 ~ v_2), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
     \\
     \begingroup
     \color{\colorMATH}
@@ -505,6 +522,7 @@ facet construction, and facet observation.
         \end{array}
         \\
         \begin{array}{cc}
+        \\\\
           {\color{\colorFAC}
           \inferrule[\textsc{App-Facet-Pos}]
           {+\ell \in pc \\\\
@@ -519,9 +537,38 @@ facet construction, and facet observation.
         \end{array}
       \end{array}
     \end{displaymath}
-              %%\inferrule[]
     \endgroup
     \label{fig:semantics}
+\end{figure*}
+
+\begin{figure*}
+  \hfill \textit{(Metafunctions)}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
+        \end{array}
+      \end{displaymath}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {write(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
+          {write(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = write(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
+          & & & \textit{and} ~ {\sigma'' = write(\sigma', v_2, pc \cup \{-\ell\}, v)}
+        \end{array}
+      \end{displaymath}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {obs(\ell, b, bv)} & {=} & {bv} & & \\
+          {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
+          {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
+          {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = & \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
+        \end{array}
+      \end{displaymath}
 \end{figure*}
 
 \section{Faceted Execution as Macros}
