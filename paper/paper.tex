@@ -360,7 +360,6 @@ facet construction, and facet observation.
         \begin{displaymath}
           \begin{array}{rcrcl}
             \blue{\alpha} & \blue{\in} & \blue{\text{addr}} & \blue{=} & \blue{\ldots} \\
-            \blue{\alpha} & \blue{\in} & \blue{\text{addr}} & \blue{=} & \blue{\ldots} \\
             \blue{bv} & \blue{\in} & \blue{\text{base-val}} & \blue{::=} & \blue{c \mid \alpha \mid \langle \lambda x.~ e, \rho \rangle \mid \star}\\
             \fcol{v} & \blue{\in} & \blue{\text{faceted-val}} & \blue{::=} & \blue{bv \mid} ~ \fcol{\facet{\blue{\alpha}}{v}{v}}
             \\
@@ -383,10 +382,10 @@ facet construction, and facet observation.
     \\
     \hfill \textit{(Expression Evaluation)} \boxed{\blue{e, \rho, \sigma \Downarrow_{pc}^E \sigma, v}}
     \\
-    \begingroup
-    \color{\colorMATH}
     \begin{displaymath}
       \begin{array}{c}
+        \begingroup
+        \color{\colorMATH}
         \begin{array}{cccc}
           \inferrule[\textsc{Const}]{ }
                                     {c, \rho, \sigma \Downarrow_{pc}^E \sigma, c}
@@ -402,7 +401,10 @@ facet construction, and facet observation.
                                      \fcol{(v_1 v_2), \rho, \sigma'' \Downarrow_{pc}^A \sigma''', v'}}
                                     {(e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v'}
         \end{array}
+       \endgroup
         \\
+        \begingroup
+        \color{\colorMATH}
         \begin{array}{ccc}
           \inferrule[\textsc{Box}]
                     {e, \rho, \sigma \Downarrow_{pc}^E v, \sigma' \and
@@ -421,22 +423,47 @@ facet construction, and facet observation.
                      \sigma''' = \fcol{\var{write}(\sigma'', v_1, pc, v_2)}}
                     {(\code{set!} ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v_2}
         \end{array}
-        \\
-        \begin{array}{ccc}
+       \endgroup
+       \\
+       \hfill \textit{(Facet Creation)}
+       \\
+       \begin{array}{ccc}
           {\color{\colorFAC}
-          \inferrule[\textsc{Let-Label}]
+          \inferrule[\textsc{Fac-Create-Split}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+            \{+\ell, -\ell\} \cup pc = \varnothing \\\\
+           e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
+           e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
+           v = \formfacet{pc}{v_1}{v_2}}
+          {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
+          & 
+          {\color{\colorFAC}
+          \inferrule[\textsc{Fac-Create-Left}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+           + \ell \in pc \\\\
+           e_2, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+          {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
+          & 
+          {\color{\colorFAC}
+          \inferrule[\textsc{Fac-Create-Right}]
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+           - \ell \in pc \\\\
+           e_3, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+          {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}     \end{array}
+
+      \end{array}
+    \end{displaymath}
+    \\
+    \hfill \textit{(Label Creation / Observation)}
+    \\
+    \[
+    \begin{array}{cc}
+      {\color{\colorFAC}
+        \inferrule[\textsc{Let-Label}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \langle \lambda x. ~ e, \rho' \rangle \\\\
            \alpha \not\in dom(\sigma') \and \sigma'' = \sigma' [\alpha \mapsto \langle \lambda x. ~ e, \rho' \rangle] \\\\
            e_2, \rho [ \ell \mapsto \alpha ], \sigma'' \Downarrow_{pc}^E \sigma''', v}
           {(\code{let-label} ~ \ell ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
-          & 
-          {\color{\colorFAC}
-          \inferrule[\textsc{Fac-Create}]
-          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', l \\\\
-           e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
-           e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \\\\
-           v = \formfacet{pc}{v_1}{v_2}}
-          {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
           {\color{\colorFAC}
           \inferrule[\textsc{Obs}]
@@ -447,10 +474,8 @@ facet construction, and facet observation.
                       e_3, \rho, \sigma''' \Downarrow_{pc}^E \sigma'''', v' \\\\
                       v'' = \fcol{\var{obs}(\ell, pc, v', v^{\pm})}}
                     {(\code{obs} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'''', v''}}
-        \end{array}
-      \end{array}
-    \end{displaymath}
-    \endgroup
+    \end{array}
+    \]
     \\
     \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
     \\
@@ -495,10 +520,130 @@ facet construction, and facet observation.
     \end{displaymath}
               %%\inferrule[]
     \endgroup
+    \label{fig:semantics}
 \end{figure*}
 
 \section{Faceted Execution as Macros}
 
+The semantics of faceted execution is an extension of the lambda
+calculus, leading to a natural question: can we use Racket's macros to
+extend Racket to faceted execution? We will see that the answer is
+yes, and the translation from the big-step rules is surprisingly
+straightforward. This section of our paper describes the design of
+Racets, a prototype implementation of faceted execution using Racket
+macros. In Section~\ref{sec:conclusion} we remark upon current
+directions scaling Racets to the whole of Racket.
+
+\paragraph*{Choosing a Representation for Facets, Labels, and Program Counters}
+
+In setting out to implement facets, we must first choose how we will
+represent facets, labels, and program counters. We have chosen to
+implement facets simply as Racket \lstinline|struct|s, containing a
+label along with positive and negative branches:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(struct facet (labelname left right))
+\end{lstlisting}
+
+Next, we must choose a representation of labels. At first
+consideration, it appears sensible to represent labels simply as
+closures. After all, labels are simply used as predicates testing
+whether or not to reveal a facet's positive or negative
+branch. However, there is a subtle issue: facet canonicalization
+relies upon a total order for labels. In light of this, we represent
+labels as a pair of a name and a policy:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(struct labelpair (name pol))
+\end{lstlisting}
+
+Now that we have defined labels, we can define branches, which are
+positive or negative labels:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(struct pos (lab))
+(struct neg (lab))
+\end{lstlisting}
+
+Similarly, program counters are sets of branches. However, we must
+still ask how we will keep track of the ``current'' program
+counter. Our implementation uses Racket's parameters, though other
+mechanisms (such as continuation marks\kris{cite}, to which parameters
+macro-expand) could also be used. Racets defines the parameter
+\code{current-pc}, and updates it as computation progresses:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(define current-pc (make-parameter (set)))
+\end{lstlisting}
+
+\paragraph*{Facet Creation}
+
+Facet creation appears as three separate rules in
+Figure~\ref{fig:semantics}, which we recapitulate here in three
+distint colors for each case:
+
+\[
+\begin{array}{ccc}
+  {\color{brown}
+    \inferrule[\textsc{Fac-Create-Left}]
+              {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+                \boxed{+ \ell \in pc} \\\\
+                e_2, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+              {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
+  & 
+  {\color{gray}
+    \inferrule[\textsc{Fac-Create-Right}]
+              {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+                \boxed{- \ell \in pc} \\\\
+                e_3, \rho, \sigma \Downarrow_{pc}^E \sigma'', v}
+              {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
+  &
+  {\color{purple}
+    \inferrule[\textsc{Fac-Create-Split}]
+              {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+                \boxed{\{+\ell, -\ell\} \cup pc = \varnothing} \\\\
+                e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
+                e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
+                v = \formfacet{pc}{v_1}{v_2}}
+              {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
+
+
+\end{array}
+\]
+
+Translating these rules to Racket involves observing that each of
+these rules will apply under one of three disjoint circumstances (each
+of them boxed in the above rules): $+\ell \in pc$, $-\ell \in pc$, or
+else $\{+\ell,-\ell\} \cap pc = \varnothing$. This leads to a
+relatively straightforward implementation that inspects the current
+program counter to decide which rule to implement:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(define-syntax-rule (fac l e1 e2)
+  (cond
+|{\color{brown}|    [(set-member? (current-pc) (pos (facet-labelname l))) e1] |}|
+|{\color{gray}|    [(set-member? (current-pc) (neg (facet-labelname l))) e2]  |}|
+
+|{\color{purple}|    [else
+     (let ([left
+            (parameterize ([current-pc (set-add (current-pc)
+                                                (pos (facet-labelname l)))]))]
+           [right
+            (parameterize ([current-pc (set-add (current-pc)
+                                                (neg (facet-labelname l)))]))]
+           (mkfacet (labelpair-name l) v1 v2)))])) |}|
+\end{lstlisting}
+
+
+As our definition is a transliteration of that in Figure 6 of Austin
+et. al's paper~\cite{Austin:2012}, we omit the implementation here.
+The result is a function, \code{mkfacet}, which (given a label and
+both positive and negative branches) forms a facet:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=racets]
+(define (mkfacet label v1 v2)
+  (canonicalize (set-add (current-pc) (pos name)) v1 v2))
+\end{lstlisting}
 
 
 \bibliographystyle{ACM-Reference-Format}
