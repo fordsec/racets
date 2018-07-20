@@ -519,36 +519,38 @@ facet construction, and facet observation.
         \end{array}
       \end{array}
     \end{displaymath}
-    \\
-    \newpage
-    \hfill \textit{(Metafunctions)}
-    \\
-    \begin{displaymath}
-      \begin{array}{rclrr}
-        {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
-        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
-        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
-        {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
-      \end{array}
-    \end{displaymath}
-    \begin{displaymath}
-      \begin{array}{rclrr}
-        {write(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
-        {write(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = write(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
-        & & & \textit{and} ~ {\sigma'' = write(\sigma', v_2, pc \cup \{-\ell\}, v)}
-      \end{array}
-    \end{displaymath}
-    \begin{displaymath}
-      \begin{array}{rclrr}
-        {obs(\ell, b, bv)} & {=} & {bv} & & \\
-        {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
-        {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
-        {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
-      \end{array}
-    \end{displaymath}
-              %%\inferrule[]
     \endgroup
     \label{fig:semantics}
+\end{figure*}
+
+\begin{figure*}
+  \hfill \textit{(Metafunctions)}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
+          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
+        \end{array}
+      \end{displaymath}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {write(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
+          {write(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = write(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
+          & & & \textit{and} ~ {\sigma'' = write(\sigma', v_2, pc \cup \{-\ell\}, v)}
+        \end{array}
+      \end{displaymath}
+      \\
+      \begin{displaymath}
+        \begin{array}{rclrr}
+          {obs(\ell, b, bv)} & {=} & {bv} & & \\
+          {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
+          {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
+          {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
+        \end{array}
+      \end{displaymath}
 \end{figure*}
 
 \section{Faceted Execution as Macros}
