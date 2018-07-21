@@ -1,4 +1,5 @@
-#lang racket
+;#lang racket
+#lang reader "racets.rkt"
 (require racket/stxparam
          web-server/servlet
          web-server/servlet-env
@@ -427,12 +428,12 @@
 ; a helper function for run-game to place the ship
 ; Return true if placing ship is successful. Otherwise, display the message.
 (define (run-game-place-ship-helper player-input-tokens ocean)
-  (cond [(equal? (last player-input-tokens) "horizontal")
-         (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #t ocean (second player-input-tokens))]
-        [(equal? (last player-input-tokens) "vertical")
-         (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #f ocean (second player-input-tokens))]
-        [else (displayln "Illegal orientation")
-              #f]))
+  (if (equal? (last player-input-tokens) "horizontal")
+      (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #t ocean (second player-input-tokens))
+      (if (equal? (last player-input-tokens) "vertical")
+          (place-ship-at (string->number (third player-input-tokens)) (string->number (fourth player-input-tokens)) #f ocean (second player-input-tokens))
+          (begin (displayln "Illegal orientation")
+                 #f))))
 
 ; a function that runs the game. It doesn't work with the web server yet.
 (define (game-on)
@@ -496,7 +497,6 @@
                                                                       (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 3 (- (fourth num-of-ships-placed-p1) 1)))
                                                                       (void))])])]
                                               [else (displayln "All ships have been successfully deployed.")])]
-                                       [(equal? (car player-input-tokens) "hit")]
                                        [else 
                                         (displayln "Invalid inputs.")])]
                                 ; here begins the battle after the ship deployment.
@@ -552,25 +552,94 @@
         (raise "You have sunk every single ship. You win!")))
   (hit-and-fire))
 
-(game-on)
+;(game-on)
 ;(a-game-simulation-for-debugging-hit)
 
 ;; Let's start with a basic chat server from Rosetta code: https://rosettacode.org/wiki/Chat_server#Racket
 ;; This may serve as the foundation of the battleship game
 ;; I will modify it to be completely different from the original code
-#|(define outs (list (current-output-port)))
-(define ((tell-all who o) line)
-  (for ([c outs] #:unless (eq? o c)) (displayln (~a who ": " line) c)))
+;; a game server for two-players battleship game
+(define outs (list (current-output-port)))
  
+; the main game interface
 (define ((player i o))
-  (define player-screen (begin (displayln "Welcome to the Battleship!")))
-  (define nick (begin (display "Nick: " o) (read-line i)))
-  (define tell (tell-all nick o))
-  (let loop ([line "(joined)"])
-    (if (eof-object? line)
-      (begin (tell "(left)") (set! outs (remq o outs)) (close-output-port o))
-      (begin (tell line) player-screen (loop (read-line i))))))
- 
+  (displayln "!!!Welcome to the Battleship game!!!")
+  (displayln "This game is for two players who place different battleships on the ocean")
+  (displayln "and try to sink all the ships of another player in order to win the game.")
+  (newline)
+  (displayln "In this game each player has 10 ships, 1 Battleship of length 4, 2 Cruiser")
+  (displayln "of length 3, 3 Destroyers of length 2, and 4 Submarines of length 1.")
+  (displayln "Please stand by for another player to join the game.") ; lets run a game first before worrying about the 2nd player
+  (newline)
+  (displayln "We have a second player joining the game! Let's start the game!")
+  (newline)
+  (displayln "Initializing your ocean board.")
+  (pretty-print ocean)
+  (newline)
+  (displayln "First we need to place 10 ships on the board.")
+
+  (displayln "To place the ships, you need to input \"place\", the type of the ship, row, column, and its orientation.")
+  (displayln "Example: place Battleship 0 0 horizontal. But you cannot place more than 1 Battleship.")
+  (displayln "To fire at a coordinate, please input \"hit\", row and column ")
+  (displayln "If you fire on target, you can see \"H\" marked on the ocean board.")
+  (displayln "If you miss the shot, you can see \"X\" marked.")
+  (define (running-the-game i o)
+    (let* ([player-input (read-line i)]
+           [player-input-tokens (string-split player-input)])
+      (if (equal? player-input "")
+          (running-the-game i o)
+          (if (or (equal? (car player-input-tokens) "exit") (equal? (car player-input-tokens) "quit"))
+              (begin
+                (raise "Player exits the battleship game")
+                (close-output-port o))
+              (if (> (sum-of-ships-placed num-of-ships-placed-p1) 0)
+                  ; ship deployment
+                  (if (not (equal? (car player-input-tokens) "place"))
+                      (displayln "Invalid inputs.")
+                      (if (equal? (second player-input-tokens) "Battleship")
+                          (if (<= (first num-of-ships-placed-p1) 0)
+                              (displayln "No more Battleship for deployment.")
+                              (if (run-game-place-ship-helper player-input-tokens ocean)
+                                  (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 0 (- (first num-of-ships-placed-p1) 1)))
+                                  (void)))
+                          ; else if it is Cruiser
+                          (if (equal? (second player-input-tokens) "Cruiser")
+                              (if (<= (second num-of-ships-placed-p1) 0)
+                                  (displayln "No more Cruiser for deployment.")
+                                  (if (run-game-place-ship-helper player-input-tokens ocean)
+                                      (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 1 (- (second num-of-ships-placed-p1) 1)))
+                                      (void)))
+                              ; else if it is Destroyer
+                              (if (equal? (second player-input-tokens) "Destroyer")
+                                  (if (<= (third num-of-ships-placed-p1) 0)
+                                      (displayln "No more Destroyer for deployment.")
+                                      (if (run-game-place-ship-helper player-input-tokens ocean)
+                                          (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 2 (- (third num-of-ships-placed-p1) 1)))
+                                          (void)))
+                                  ; else if it is Submarine
+                                  (if (equal? (second player-input-tokens) "Submarine")
+                                      (if (<= (fourth num-of-ships-placed-p1) 0)
+                                          (displayln "No more Submarine for deployment.")
+                                          (if (run-game-place-ship-helper player-input-tokens ocean)
+                                              (set! num-of-ships-placed-p1 (list-set num-of-ships-placed-p1 3 (- (fourth num-of-ships-placed-p1) 1)))
+                                              (void)))
+                                      ; else
+                                      (displayln "All ships have been successfully deployed."))))))
+                  ; else, that means all ships have been deployed. Start the battle.
+                  (begin (displayln "Let's battle begin!")
+                         (if (and (equal? (car player-input-tokens) "hit")
+                                  (number? (string->number (second player-input-tokens)))
+                                  (number? (string->number (third player-input-tokens))))
+                             (if (shoot-at (string->number (second player-input-tokens)) (string->number (third player-input-tokens)) ocean)
+                                 (set! ocean (struct-copy ocean-rep ocean [ships-sunk (+ (ocean-rep-ships-sunk ocean) 1)]))
+                                 (displayln "You miss the shot!"))
+                             (displayln "Invalid input."))))))
+      (newline)
+      (displayln "Now your ocean board looks like:")
+      (pretty-print ocean)
+      (running-the-game i o)))
+  (running-the-game i o))
+
 (define (battleship listener)
   (define-values [i o] (tcp-accept listener))
   (for ([p (list i o)]) (file-stream-buffer-mode p 'none))
@@ -578,7 +647,7 @@
  
 (void (thread (λ () (battleship (tcp-listen 8080)))))
 ((player (current-input-port) (current-output-port)))
-|#
+
 #|
 (define (handle in out)
   ; Discard the request header (up to blank line):
