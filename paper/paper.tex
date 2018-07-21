@@ -66,6 +66,7 @@
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
 \newcommand{\colorMATH}{black!20!blue}
+\newcommand{\colorCOMM}{0.133,0.545,0.133}
 \newcommand{\colorFAC}{black!20!red}
 \newcommand{\blue}[1] {{\color{\colorMATH} #1}}
 \newcommand{\fcol}[1] {{\color{\colorFAC} #1}}
@@ -542,8 +543,6 @@ hiding the sensitive data.}
 \end{figure*}
 
 \begin{figure*}
-  \hfill \textit{(Metafunctions)}
-      \\
       \begin{displaymath}
         \begin{array}{rclrr}
           {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
@@ -555,9 +554,9 @@ hiding the sensitive data.}
       \\
       \begin{displaymath}
         \begin{array}{rclrr}
-          {write(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
-          {write(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = write(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
-          & & & \textit{and} ~ {\sigma'' = write(\sigma', v_2, pc \cup \{-\ell\}, v)}
+          {\var{write}(\sigma, \alpha, pc, v)} & {=} & {\sigma[\alpha ~ := \formfacet{pc}{v}{\sigma(\alpha)}]} & & \\
+          {\var{write}(\sigma, \facet{\ell}{v_1}{v_2}), pc, v} & = & {\sigma''} & \textit{where} ~ {\sigma' = \var{write}(\sigma, v_1, pc \cup \{+\ell\}, v)} \\
+          & & & \textit{and} ~ {\sigma'' = \var{write}(\sigma', v_2, pc \cup \{-\ell\}, v)}
         \end{array}
       \end{displaymath}
       \\
@@ -569,6 +568,8 @@ hiding the sensitive data.}
           {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = & \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
         \end{array}
       \end{displaymath}
+      \caption{Meta-functions used in our semantics}
+      \label{fig:metafunctions}
 \end{figure*}
 
 \section{Faceted Execution as Macros}
@@ -718,6 +719,7 @@ al.~\cite{Austin:2012}) we omit its definition here.
                                             (neg (facet-labelname l)))]))]
            (mkfacet (labelpair-name l) v1 v2)))]))
 \end{lstlisting}}
+}
 \caption{Facet creation as a macro}
 \label{fig:fac-create}
 \end{figure}
@@ -735,7 +737,7 @@ label creation is relatively straightforward from the semantics:
     body))
 \end{lstlisting}
 
-\paragraph*{Faceted References}
+\paragraph*{Faceted Boxes, Writes, and Observations}
 
 Our faceted semantics includes explicit \code{box} and \code{unbox}
 forms. This differs from Racket's semantics, where any variable may be
@@ -759,36 +761,80 @@ when necessary.
 
 
 \begin{figure}
+\small
+\begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets]
 (define-syntax (ref-set! stx)
   (syntax-case stx ()
     [(_ var e)
-     #`(let ([value e])
-         (let setf ([var var]
-                    [pc (current-pc)])
+     #`(let ([v e])
+         (let write ([var var]
+                     [pc (current-pc)])
            (if (box? var)
-               ; if var is a facet value
-               (set-box! var (construct-facet-optimized (set->list (current-pc)) value (unbox var)))
-               ; else
+               ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc, v)$@>
+               (set-box! var (construct-facet (current-pc) v (unbox var)))
+               ; Else split
                (mkfacet
-                (facet-labelname (unbox var))
-                (setf
-                 (facet-left (unbox var))
-                 (set-add pc (pos (facet-labelname var))))
-                (setf
-                 (facet-right (unbox var))
-                 (set-add pc (neg (facet-labelname var))))))))]))
+                 (facet-labelname (unbox var))
+                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{+l\}, v)$@>
+                 (write
+                   (facet-left (unbox var))
+                   (set-add pc (pos (facet-labelname var))))
+                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{-l\}, v)$@>
+                 (write
+                   (facet-right (unbox var))
+                   (set-add pc (neg (facet-labelname var))))))))]))
+\end{lstlisting}
 \caption{Racets' implementation of \code{set!}}
 \label{fig:setbang}
 \end{figure}
 
-Racets defines its \code{box} macro, along with \code{unbox} and
+Racets defines a \code{box} macro, along with \code{unbox} and
 \code{set!}. We include the definition of \code{set!} in
 Figure~\ref{fig:setbang}, which inlines the definition of the
 \textit{write} metafunction from Section~\ref{sec:semantics} to
 consider the case under which a facet is used when an address is
 expected.
 
+Facet observation is handled similarly, first evaluating the label to
+produce a policy predicate, followed by evaluating the policy's
+argument and a possibly-faceted value to observe. After applying the
+policy its argument, we produce the value \bmth{v^{\pm}} and descend
+down the facet until reaching either a base value or finding the
+selected label (at which point we select the appropriate branch).
+
+\paragraph*{Faceted Function Application}
+
+By now we can anticipate a predictable pattern for implementing
+faceted execution: check \bmth{pc} to decide whether to branch left,
+right, or split. This is largely our strategy for handling faceted
+function application, with a small twist: we need to be able to apply
+functions from outside of Racets. For example, if we want to apply
+builtin functions such as \code{display}, we need to be mindful of the
+fact that these functions cannot work with faceted arguments.
+
+To handle this, we implement a macro for the \code{lambda} form, to
+tag Racet closures specifically (so that they are differentiated from
+functions outside of the current module). In the case that a foreign
+function is applied to a faceted value, our implementation of function
+application wraps the function to be able to handle facets by
+distributing the function through each branch of the facet.
+
+In general it is unsafe to apply an unknown function to a faceted
+value. This is because the unknown function may leak the facet's
+private information as a side-effect. Therefore, our current
+implementation of Racets allows programmers to apply external
+functions, but does not make any guarantee of safety. A better
+strategy may be to perform an \code{obs} before each call to a
+potentially-unsafe function. In general, we believe module
+interactions are a challenging problem in faceted execution, and we
+leave its study to future work.
+
+\section{Implementation and Evaluation}
+
+\section{Conclusion}
+
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{paper}
-
 \end{document}
+
+
