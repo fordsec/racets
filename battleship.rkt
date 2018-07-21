@@ -65,153 +65,151 @@
 
 ; get the type of a ship
 (define (get-ship-type a-ship)
-  (if (ship? a-ship)
-      (cond
-        [(= (ship-length a-ship) 4)
-         "Battleship"]
-        [(= (ship-length a-ship) 3)
-         "Cruiser"]
-        [(= (ship-length a-ship) 2)
-         "Destroyer"]
-        [(= (ship-length a-ship) 1)
-         "Submarine"]
-        [else
-         (displayln "Not a ship supported by my Battleship game, or it is empty sea.")])
-      (raise "[get-ship-type] a-ship is not a ship struct.")))
+    (if (ship? a-ship)
+        (if (= (ship-length a-ship) 4)
+            "Battleship"
+            (if (= (ship-length a-ship) 3)
+                "Cruiser"
+                (if (= (ship-length a-ship) 2)
+                    "Destroyer"
+                    (if (= (ship-length a-ship) 1)
+                        "Submarine"
+                        (displayln "Not a ship supported by my Battleship game, or it is empty sea.")))))
+        (raise "[get-ship-type] a-ship is not a ship struct.")))
 
 ; a helper function that checks the adjancency occupation around
 ; the location given by the row and column.
 ; This one is for vertical
 ; It seems to work now.
 (define (is-occupation-in-ocean-helper-vertical row column a-ship an-ocean)
-  (cond [(equal? a-ship "Battleship")
-         (if (or (>= (+ row 1) 10) (>= (+ row 2) 10) (>= (+ row 3) 10))
-             #f
-             (nor (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 2) column an-ocean)
-                  (is-occupied (+ row 3) column an-ocean)
-                  (is-occupied (+ row 4) column an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied row (- column 1) an-ocean)
-                  (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 2) (- column 1) an-ocean)
-                  (is-occupied (+ row 2) (+ column 1) an-ocean)
-                  (is-occupied (+ row 3) (- column 1) an-ocean)
-                  (is-occupied (+ row 3) (+ column 1) an-ocean)
-                  (is-occupied (+ row 4) (- column 1) an-ocean)
-                  (is-occupied (+ row 4) (+ column 1) an-ocean)))]
-        [(equal? a-ship "Cruiser")
-         (if (or (>= (+ row 1) 10) (>= (+ row 2) 10))
-             #f
-             (nor (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 2) column an-ocean)
-                  (is-occupied (+ row 3) column an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied row (- column 1) an-ocean)
-                  (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 2) (- column 1) an-ocean)
-                  (is-occupied (+ row 2) (+ column 1) an-ocean)
-                  (is-occupied (+ row 3) (- column 1) an-ocean)
-                  (is-occupied (+ row 3) (+ column 1) an-ocean)))]
-        [(equal? a-ship "Destroyer")
-         (if (>= (+ row 1) 10)
-             #f
-             (nor (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 2) column an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied row (- column 1) an-ocean)
-                  (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 2) (- column 1) an-ocean)
-                  (is-occupied (+ row 2) (+ column 1) an-ocean)))]
-        [(equal? a-ship "Submarine")
-         (nor (is-occupied (+ row 1) column an-ocean)
-              (is-occupied (- row 1) column an-ocean)
-              (is-occupied (- row 1) (+ column 1) an-ocean)
-              (is-occupied (- row 1) (- column 1) an-ocean)
-              (is-occupied row (- column 1) an-ocean)
-              (is-occupied row (+ column 1) an-ocean)
-              (is-occupied (+ row 1) (- column 1) an-ocean)
-              (is-occupied (+ row 1) (+ column 1) an-ocean))]
-        [else (raise "a-ship is not a valid ship")]))
+    (if (equal? a-ship "Battleship")
+        (if (or (>= (+ row 1) 10) (>= (+ row 2) 10) (>= (+ row 3) 10))
+            #f
+            (nor (is-occupied (+ row 1) column an-ocean)
+                 (is-occupied (+ row 2) column an-ocean)
+                 (is-occupied (+ row 3) column an-ocean)
+                 (is-occupied (+ row 4) column an-ocean)
+                 (is-occupied (- row 1) column an-ocean)
+                 (is-occupied (- row 1) (+ column 1) an-ocean)
+                 (is-occupied (- row 1) (- column 1) an-ocean)
+                 (is-occupied row (- column 1) an-ocean)
+                 (is-occupied row (+ column 1) an-ocean)
+                 (is-occupied (+ row 1) (- column 1) an-ocean)
+                 (is-occupied (+ row 1) (+ column 1) an-ocean)
+                 (is-occupied (+ row 2) (- column 1) an-ocean)
+                 (is-occupied (+ row 2) (+ column 1) an-ocean)
+                 (is-occupied (+ row 3) (- column 1) an-ocean)
+                 (is-occupied (+ row 3) (+ column 1) an-ocean)
+                 (is-occupied (+ row 4) (- column 1) an-ocean)
+                 (is-occupied (+ row 4) (+ column 1) an-ocean)))
+        (if (equal? a-ship "Cruiser")
+            (if (or (>= (+ row 1) 10) (>= (+ row 2) 10))
+                #f
+                (nor (is-occupied (+ row 1) column an-ocean)
+                     (is-occupied (+ row 2) column an-ocean)
+                     (is-occupied (+ row 3) column an-ocean)
+                     (is-occupied (- row 1) column an-ocean)
+                     (is-occupied (- row 1) (+ column 1) an-ocean)
+                     (is-occupied (- row 1) (- column 1) an-ocean)
+                     (is-occupied row (- column 1) an-ocean)
+                     (is-occupied row (+ column 1) an-ocean)
+                     (is-occupied (+ row 1) (- column 1) an-ocean)
+                     (is-occupied (+ row 1) (+ column 1) an-ocean)
+                     (is-occupied (+ row 2) (- column 1) an-ocean)
+                     (is-occupied (+ row 2) (+ column 1) an-ocean)
+                     (is-occupied (+ row 3) (- column 1) an-ocean)
+                     (is-occupied (+ row 3) (+ column 1) an-ocean)))
+            (if (equal? a-ship "Destroyer")
+                (if (>= (+ row 1) 10)
+                    #f
+                    (nor (is-occupied (+ row 1) column an-ocean)
+                         (is-occupied (+ row 2) column an-ocean)
+                         (is-occupied (- row 1) column an-ocean)
+                         (is-occupied (- row 1) (+ column 1) an-ocean)
+                         (is-occupied (- row 1) (- column 1) an-ocean)
+                         (is-occupied row (- column 1) an-ocean)
+                         (is-occupied row (+ column 1) an-ocean)
+                         (is-occupied (+ row 1) (- column 1) an-ocean)
+                         (is-occupied (+ row 1) (+ column 1) an-ocean)
+                         (is-occupied (+ row 2) (- column 1) an-ocean)
+                         (is-occupied (+ row 2) (+ column 1) an-ocean)))
+                (if (equal? a-ship "Submarine")
+                    (nor (is-occupied (+ row 1) column an-ocean)
+                         (is-occupied (- row 1) column an-ocean)
+                         (is-occupied (- row 1) (+ column 1) an-ocean)
+                         (is-occupied (- row 1) (- column 1) an-ocean)
+                         (is-occupied row (- column 1) an-ocean)
+                         (is-occupied row (+ column 1) an-ocean)
+                         (is-occupied (+ row 1) (- column 1) an-ocean)
+                         (is-occupied (+ row 1) (+ column 1) an-ocean))
+                    (raise "a-ship is not a valid ship."))))))
 
 ; a helper function that checks the adjancency occupation around
 ; the location given by the row and column.
 ; This one is for horizontal
 ; It seems to work now.
 (define (is-occupation-in-ocean-helper-horizontal row column a-ship an-ocean)
-  (cond [(equal? a-ship "Battleship")
-         (if (or (>= (+ column 1) 10) (>= (+ column 2) 10) (>= (+ column 3) 10))
-             #f
-             (nor (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied row (+ column 2) an-ocean)
-                  (is-occupied row (+ column 3) an-ocean)
-                  (is-occupied row (+ column 4) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 2) an-ocean)
-                  (is-occupied (- row 1) (+ column 2) an-ocean)
-                  (is-occupied (+ row 1) (+ column 3) an-ocean)
-                  (is-occupied (- row 1) (+ column 3) an-ocean)
-                  (is-occupied (+ row 1) (+ column 4) an-ocean)
-                  (is-occupied (- row 1) (+ column 4) an-ocean)))]
-        [(equal? a-ship "Cruiser")
-         (if (or (>= (+ column 1) 10) (>= (+ column 2) 10))
-             #f
-             (nor (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied row (+ column 2) an-ocean)
-                  (is-occupied row (+ column 3) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 2) an-ocean)
-                  (is-occupied (- row 1) (+ column 2) an-ocean)
-                  (is-occupied (+ row 1) (+ column 3) an-ocean)
-                  (is-occupied (- row 1) (+ column 3) an-ocean)))]
-        [(equal? a-ship "Destroyer")
-         (if (>= (+ column 1) 10)
-             #f
-             (nor (is-occupied row (+ column 1) an-ocean)
-                  (is-occupied row (+ column 2) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (+ row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) (- column 1) an-ocean)
-                  (is-occupied (- row 1) column an-ocean)
-                  (is-occupied (+ row 1) column an-ocean)
-                  (is-occupied (+ row 1) (+ column 1) an-ocean)
-                  (is-occupied (- row 1) (+ column 1) an-ocean)
-                  (is-occupied (+ row 1) (+ column 2) an-ocean)
-                  (is-occupied (- row 1) (+ column 2) an-ocean)))]
-        [(equal? a-ship "Submarine")
-         (nor (is-occupied (+ row 1) column an-ocean)
-              (is-occupied (- row 1) column an-ocean)
-              (is-occupied (- row 1) (+ column 1) an-ocean)
-              (is-occupied (- row 1) (- column 1) an-ocean)
-              (is-occupied row (- column 1) an-ocean)
-              (is-occupied row (+ column 1) an-ocean)
-              (is-occupied (+ row 1) (- column 1) an-ocean)
-              (is-occupied (+ row 1) (+ column 1) an-ocean))]
-        [else (raise "a-ship is not a valid ship")]))        
+    (if (equal? a-ship "Battleship")
+        (if (or (>= (+ column 1) 10) (>= (+ column 2) 10) (>= (+ column 3) 10))
+            #f
+            (nor (is-occupied row (+ column 1) an-ocean)
+                 (is-occupied row (+ column 2) an-ocean)
+                 (is-occupied row (+ column 3) an-ocean)
+                 (is-occupied row (+ column 4) an-ocean)
+                 (is-occupied row (- column 1) an-ocean)
+                 (is-occupied (+ row 1) (- column 1) an-ocean)
+                 (is-occupied (- row 1) (- column 1) an-ocean)
+                 (is-occupied (- row 1) column an-ocean)
+                 (is-occupied (+ row 1) column an-ocean)
+                 (is-occupied (+ row 1) (+ column 1) an-ocean)
+                 (is-occupied (- row 1) (+ column 1) an-ocean)
+                 (is-occupied (+ row 1) (+ column 2) an-ocean)
+                 (is-occupied (- row 1) (+ column 2) an-ocean)
+                 (is-occupied (+ row 1) (+ column 3) an-ocean)
+                 (is-occupied (- row 1) (+ column 3) an-ocean)
+                 (is-occupied (+ row 1) (+ column 4) an-ocean)
+                 (is-occupied (- row 1) (+ column 4) an-ocean)))
+        (if (equal? a-ship "Cruiser")
+            (if (or (>= (+ column 1) 10) (>= (+ column 2) 10))
+                #f
+                (nor (is-occupied row (+ column 1) an-ocean)
+                     (is-occupied row (+ column 2) an-ocean)
+                     (is-occupied row (+ column 3) an-ocean)
+                     (is-occupied row (- column 1) an-ocean)
+                     (is-occupied (+ row 1) (- column 1) an-ocean)
+                     (is-occupied (- row 1) (- column 1) an-ocean)
+                     (is-occupied (- row 1) column an-ocean)
+                     (is-occupied (+ row 1) column an-ocean)
+                     (is-occupied (+ row 1) (+ column 1) an-ocean)
+                     (is-occupied (- row 1) (+ column 1) an-ocean)
+                     (is-occupied (+ row 1) (+ column 2) an-ocean)
+                     (is-occupied (- row 1) (+ column 2) an-ocean)
+                     (is-occupied (+ row 1) (+ column 3) an-ocean)
+                     (is-occupied (- row 1) (+ column 3) an-ocean)))
+            (if (equal? a-ship "Destroyer")
+                (if (>= (+ column 1) 10)
+                    #f
+                    (nor (is-occupied row (+ column 1) an-ocean)
+                         (is-occupied row (+ column 2) an-ocean)
+                         (is-occupied row (- column 1) an-ocean)
+                         (is-occupied (+ row 1) (- column 1) an-ocean)
+                         (is-occupied (- row 1) (- column 1) an-ocean)
+                         (is-occupied (- row 1) column an-ocean)
+                         (is-occupied (+ row 1) column an-ocean)
+                         (is-occupied (+ row 1) (+ column 1) an-ocean)
+                         (is-occupied (- row 1) (+ column 1) an-ocean)
+                         (is-occupied (+ row 1) (+ column 2) an-ocean)
+                         (is-occupied (- row 1) (+ column 2) an-ocean)))
+                (if (equal? a-ship "Submarine")
+                    (nor (is-occupied row (+ column 1) an-ocean)
+                         (is-occupied row (- column 1) an-ocean)
+                         (is-occupied (+ row 1) (- column 1) an-ocean)
+                         (is-occupied (- row 1) (- column 1) an-ocean)
+                         (is-occupied (- row 1) column an-ocean)
+                         (is-occupied (+ row 1) column an-ocean)
+                         (is-occupied (+ row 1) (+ column 1) an-ocean)
+                         (is-occupied (- row 1) (+ column 1) an-ocean))
+                    (raise "a-ship is not a valid ship."))))))
 
 ; Check if it is ok to place the ship at this location
 ; Return true if it is ok to place the ship of this length at the location with
@@ -239,12 +237,14 @@
 ; Need to be careful about the length of the ship
 ; Return true if placing the ship is successful. Otherwise false.
 ; It seems to work now.
+; I change the ship display to be "O" in order to hide the ship.
 (define (place-ship-at row column horizontal an-ocean a-ship)
-  (if (and (ocean-rep? an-ocean))
-      (cond [(ok-to-place-ship-at row column horizontal an-ocean a-ship)
-             (if horizontal
-                 ; place the ship according to the type of the ship
-                 (cond [(equal? a-ship "Battleship")
+    (if (ocean-rep? an-ocean)
+        (if (ok-to-place-ship-at row column horizontal an-ocean a-ship)
+            (begin
+              (if horizontal
+                  (if (equal? a-ship "Battleship")
+                      (begin
                         (array-set! (ocean-rep-ships-array an-ocean) row column 
                                     (ship row column 4 horizontal #f "B"))
                         (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
@@ -252,62 +252,66 @@
                         (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
                                     (ship row (+ column 2) 4 horizontal #f "B"))
                         (array-set! (ocean-rep-ships-array an-ocean) row (+ column 3)
-                                    (ship row (+ column 3) 4 horizontal #f "B"))
-                        #t]
-                       [(equal? a-ship "Cruiser")
+                                    (ship row (+ column 3) 4 horizontal #f "B")) #t)
+                      (if (equal? a-ship "Cruiser")
+                          (begin
+                            (array-set! (ocean-rep-ships-array an-ocean) row column
+                                        (ship row column 3 horizontal #f "C"))
+                            (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
+                                        (ship row (+ column 1) 3 horizontal #f "C"))
+                            (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
+                                        (ship row (+ column 2) 3 horizontal #f "C")) #t)
+                          (if (equal? a-ship "Destroyer")
+                              (begin
+                                (array-set! (ocean-rep-ships-array an-ocean) row column
+                                            (ship row column 2 horizontal #f "D"))
+                                (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
+                                            (ship row (+ column 1) 2 horizontal #f "D")) #t)
+                              (if (equal? a-ship "Submarine")
+                                  (begin
+                                    (array-set! (ocean-rep-ships-array an-ocean) row column
+                                                (ship row column 1 horizontal #f "S")) #t)
+                                  (void)))))
+                  (if (equal? a-ship "Battleship")
+                      (begin
                         (array-set! (ocean-rep-ships-array an-ocean) row column
-                                    (ship row column 3 horizontal #f "C"))
-                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
-                                    (ship row (+ column 1) 3 horizontal #f "C"))
-                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 2)
-                                    (ship row (+ column 2) 3 horizontal #f "C"))
-                        #t]
-                       [(equal? a-ship "Destroyer")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column
-                                    (ship row column 2 horizontal #f "D"))
-                        (array-set! (ocean-rep-ships-array an-ocean) row (+ column 1)
-                                    (ship row (+ column 1) 2 horizontal #f "D"))
-                        #t]
-                       [(equal? a-ship "Submarine")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column
-                                    (ship row column 1 horizontal #f "S"))
-                        #t])
-                 (cond [(equal? a-ship "Battleship")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column 
                                     (ship row column 4 horizontal #f "B"))
-                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                    (ship (+ row 1) column 4 horizontal #f "B"))
+                        (array-set!
+                         (ocean-rep-ships-array an-ocean) (+ row 1) column
+                         (ship (+ row 1) column 4 horizontal #f "B"))
                         (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
                                     (ship (+ row 2) column 4 horizontal #f "B"))
                         (array-set! (ocean-rep-ships-array an-ocean) (+ row 3) column
-                                    (ship (+ row 3) column 4 horizontal #f "B"))
-                        #t]
-                       [(equal? a-ship "Cruiser")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                    (ship row column 3 horizontal #f "C"))
-                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                    (ship (+ row 1) column 3 horizontal #f "C"))
-                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
-                                    (ship (+ row 2) column 3 horizontal #f "C"))
-                        #t]
-                       [(equal? a-ship "Destroyer")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                    (ship row column 2 horizontal #f "D"))
-                        (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
-                                    (ship (+ row 1) column 2 horizontal #f "D"))
-                        #t]
-                       [(equal? a-ship "Submarine")
-                        (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                    (ship row column 1 horizontal #f "S"))
-                        #t]))]
-            [else (displayln "Illegal placement of the ship.")
-                  #f])
-      (raise "[place-ship-at] an-ocean is not an ocean struct or a-ship is not a ship struct.")))
+                                    (ship (+ row 3) column 4 horizontal #f "B")) #t)
+                      (if (equal? a-ship "Cruiser")
+                          (begin
+                            (array-set!
+                             (ocean-rep-ships-array an-ocean) row column
+                             (ship row column '3 horizontal #f "C"))
+                            (array-set!
+                             (ocean-rep-ships-array an-ocean) (+ row 1) column
+                             (ship (+ row 1) column 3 horizontal #f "C"))
+                            (array-set! (ocean-rep-ships-array an-ocean) (+ row 2) column
+                                        (ship (+ row 2) column 3 horizontal #f "C")) #t)
+                          (if (equal? a-ship "Destroyer")
+                              (begin
+                                (array-set! (ocean-rep-ships-array an-ocean) row column
+                                            (ship row column 2 horizontal #f "D"))
+                                (array-set! (ocean-rep-ships-array an-ocean) (+ row 1) column
+                                            (ship (+ row 1) column 2 horizontal #f "D")) #t)
+                              (if (equal? a-ship "Submarine")
+                                  (begin
+                                    (array-set! (ocean-rep-ships-array an-ocean) row column
+                                                (ship row column 1 horizontal #f "S"))#t)
+                                  (void)))))))
+            (begin
+              (displayln "Illegal placement of the ship.")
+              #f))
+        (raise "[place-ship-at] an-ocean is not an ocean struct or a-ship is not a ship struct.")))
 
 ; check if the ship has been sunk or not by looking at the ship's hits list.
 ; Return true if it is sunk. Otherwise, false.
 (define (is-sunk a-ship)
-  ;(andmap (λ (x) (and x)) (ship-hits a-ship))
   (get-hit-of-ship a-ship))
 
 ; shoot at a particular location in the ocean
@@ -316,34 +320,46 @@
 ; Otherwise false.
 (define (shoot-at row column an-ocean)
   (if (ocean-rep? an-ocean)
-      (cond [(and (< row 10) (>= row 0) (< column 10) (>= column 0))
-             (let* ([the-target-ship (array-ref (ocean-rep-ships-array an-ocean) row column)]
-                    [the-type-of-target (get-ship-type the-target-ship)])
-               (cond [(and (> (ship-length the-target-ship) 0) (not (is-sunk the-target-ship)))
-                      (cond [(equal? the-type-of-target "Battleship")
-                             (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                         (ship row column 4 (is-horizontal the-target-ship) #t "H"))
-                             #t]
-                            [(equal? the-type-of-target "Cruiser")
-                             (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                         (ship row column 3 (is-horizontal the-target-ship) #t "H"))
-                             #t]
-                            [(equal? the-type-of-target "Destroyer")
-                             (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                         (ship row column 2 (is-horizontal the-target-ship) #t "H"))
-                             #t]
-                            [(equal? the-type-of-target "Submarine")
-                             (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                         (ship row column 1 (is-horizontal the-target-ship) #t "H"))
-                             #t])]
-                     [(equal? (ship-display the-target-ship) "H")
-                      (displayln "You have attacked that part of the ship already.")
-                      #f]
-                     [else (array-set! (ocean-rep-ships-array an-ocean) row column 
-                                       (ship row column 1 (is-horizontal the-target-ship) #t "X"))
-                           #f]))]
-            [else (displayln "Illegal coordinate to fire at!")
-                  #f])
+      (if (and (< row 10) (>= row 0) (< column 10) (>= column 0))
+          (begin
+            (let* ([the-target-ship (array-ref (ocean-rep-ships-array an-ocean) row column)]
+                   [the-type-of-target (get-ship-type the-target-ship)])
+              (if (and (> (ship-length the-target-ship) 0) (not (is-sunk the-target-ship)))
+                  (begin
+                    (if (equal? the-type-of-target "Battleship")
+                        (begin
+                          (array-set!
+                           (ocean-rep-ships-array an-ocean) row column
+                           (ship row column 4 (is-horizontal the-target-ship) #t "H"))
+                          #t)
+                        (if (equal? the-type-of-target "Cruiser")
+                            (begin
+                              (array-set! (ocean-rep-ships-array an-ocean) row column
+                                          (ship row column 3 (is-horizontal the-target-ship) #t "H"))
+                              #t)
+                            (if (equal? the-type-of-target "Destroyer")
+                                (begin
+                                  (array-set! (ocean-rep-ships-array an-ocean) row column
+                                              (ship row column 2 (is-horizontal the-target-ship) #t "H"))
+                                  #t)
+                                (if (equal? the-type-of-target "Submarine")
+                                    (begin
+                                      (array-set!
+                                       (ocean-rep-ships-array an-ocean) row column
+                                       (ship row column 1 (is-horizontal the-target-ship) #t "H"))
+                                      #t)
+                                    (void))))))
+                  (if (equal? (ship-display the-target-ship) "H")
+                      (begin
+                        (displayln "You have attacked that part of the ship already.")
+                        #f)
+                      (begin
+                        (array-set! (ocean-rep-ships-array an-ocean) row column
+                                    (ship row column 1 (is-horizontal the-target-ship) #t "X"))
+                        #f)))))
+          (begin
+            (displayln "Illegal coordinate to fire at!")
+            #f))
       (raise "an-ocean is not an ocean struct.")))
 
 ; Ocean struct
@@ -357,15 +373,6 @@
           (not (= (ship-length (array-ref (ocean-rep-ships-array an-ocean) row column)) 0))
           #f)
       (raise "an-ocean is not an ocean struct")))
-
-; shoot at a location given by row and column
-; Return true if the given location has a floating ship. Otherwise false.
-; At the same time we need to update the number of shots that have been fired,
-; and the number of hits.
-; not tested yet. Potential problematic!!!!
-; not needed
-;(define (count-shoot-at row column an-ocean)
-;  (shoot-at row column an-ocean))
 
 ; get the number of shots fired in the ocean
 (define (get-shots-fired an-ocean)
