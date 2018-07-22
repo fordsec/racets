@@ -1,8 +1,10 @@
-*.cls
 *.css
 *.aux
 *.html
 *.log
 *.js
 *.out
+*#*
+*~*
+*.D_Store
 paper.pdf

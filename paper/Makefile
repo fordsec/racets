@@ -5,6 +5,6 @@ paper.pdf: paper.tex
 	xelatex paper.tex
 
 clean:
-	rm *.out *.pdf *.aux *.cls 
+	rm *.out *.pdf *.aux *.log 
 
 .PHONY: clean
