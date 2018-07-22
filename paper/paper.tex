@@ -71,6 +71,7 @@
 \newcommand{\blue}[1] {{\color{\colorMATH} #1}}
 \newcommand{\fcol}[1] {{\color{\colorFAC} #1}}
 \newcommand{\bmth}[1] {{\color{\colorMATH} $#1$}}
+\newcommand{\rmth}[1] {{\color{\colorFAC} $#1$}}
 \newcommand{\code}[1]{\lstinline{#1}}
 
 \newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
@@ -349,30 +350,6 @@ faceted execution.
 \caption{Syntax of \lang}
 \end{figure}
 
-We now present a semantics for a core language (\lang) which includes
-facets. Our presentation largely mirrors that of Austin et
-al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
-Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
-calculus with references (which have interact with facets in a subtle
-way) and three forms unique to faceted execution: facet construction, 
-label creation, and facet observation.
-
-\zw{Facet construction allows the users to construct a facet value that
-consists of a policy, a private/positive variable that can be a basic value
-or another facet value but is hidden away from other users, and a public/negative 
-variable. }
-
-\zw{Label creation dynamically creates a label binding to a given policy.
-A policy consists of a policy variable and a policy body/expression. 
-When a lable is invoked in the faceted executions, the policy will be called
-to evaluate the given faceted value. When the policy is invoked, the policy
-body (e.g. lambda function) evaluates to a boolean, which indicates whether
-to observe the positive or the negative branch of a faceted value. This allows
-the users to protect their data via choosing what data to be seen by others and 
-hiding the sensitive data.}
-
-\zw{Facet observation }
-
 \begin{figure*}
     \begin{tabular}{cc}
       \begin{minipage}{.5\textwidth}
@@ -539,8 +516,94 @@ hiding the sensitive data.}
       \end{array}
     \end{displaymath}
     \endgroup
+    \caption{Semantics of Faceted Execution}
     \label{fig:semantics}
 \end{figure*}
+
+We now present a semantics for a core language (\lang) which includes
+facets. Our presentation largely mirrors that of Austin et
+al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
+Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
+calculus with references (which have interact with facets in a subtle
+way) and three forms unique to faceted execution: facet construction, 
+label creation, and facet observation.
+
+Our semantics is shown in Figure~\ref{fig:semantics}. As faceted
+execution is an extension of the lambda calculus with references, we
+present the parts of the semantics unique to faceted execution in
+red. Base values in our semantics include addresses (used for boxes),
+constants, closures. We also include a special value \bmth{\star},
+which represents lazy failure: \bmth{\star} helps define the semantics
+of store update within a privileged context.
+
+Values in our semantics are either (unfaceted) base values or facets
+composed of a label and two branches. Facets can nest, allowing trees
+of faceted values. We define \emph{branches} as positive or negative
+labels. The program counter \rmth{pc} tracks the set of labels in the
+execution context. For example, to apply a faceted function to a value
+(for example \bmth{(\facet{\ell}{\lambda x.~0}{\lambda x.~1} 1)}), the
+semantics first applies the function along the positive branch
+extending the pc with \bmth{+\ell}, then applies the negative branch
+extending the pc with \bmth{-\ell}.
+
+The reduction relation \bmth{e, \rho, \sigma \Downarrow_{pc}^E \sigma,
+  v} reduces an expression, environment, and store to a resulting
+store and value. The first three rules (in all blue) are unchanged
+from the standard interpretation in the lambda calculus. The
+\textsc{Apply} rule calls out to the helper relation \rmth{(v~v),
+  \rho, \sigma \Downarrow_{pc}^A \sigma, v}, which applies a
+possibly-faceted value to an argument: if the value being applied is a
+plain (unfaceted) closure, the \textsc{App-Base} rule (in blue, as it
+is unchanged from the lambda calculus) applies it and returns
+immediately to the \bmth{\Downarrow_{pc}^E} relation.
+
+In the case that a faceted value is applied, \rmth{\Downarrow_{pc}^A}
+performs one of three functions, based on the relation of \rmth{\ell}
+to \rmth{pc}. If there is no occurrence of either \rmth{+\ell} or
+\rmth{-\ell} in \rmth{pc}, then the semantics must split the
+application. To do this, it applies both the positive and negative
+branches after extending \rmth{pc}. After reducing both branches to a
+value, the result is then formed into a facet. If \rmth{+\ell \in pc},
+then the semantics has already branched on the label \rmth{\ell}, so
+splitting would be redundant. In this case, \rmth{\Downarrow_{pc}^A}
+simply selects the positive branch to apply and continues without
+splitting. The symmetric case occurs in \textsc{App-Facet-Neg}. Facet
+formation follows this pattern, accounting for the relation of
+\rmth{\ell} to \rmth{pc}.
+
+The rule \text{Box}, \textsc{Unbox}, and \textsc{Set} are similar to
+the standard implementation of boxes, but with a slight twist: box
+creation, reads, and writes may occur within a privilaged context. To
+understand why, consider the following example\footnote{Our formal
+  semantics elides \code{if}, though it may be obtained via a Church
+  encoding if desired as in Austin et al.\cite{Austin:12}. Our
+  implementation includes \code{if} but not other constructs such as
+  \code{cond}}:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=boxexample]
+(define x (box 0))
+(if (= (facet alice 0 1) 0)
+  (set! x 0)
+  (set! x 1))
+(unbox x)
+\end{lstlisting}
+
+If we do nothing special to account for the fact that the program
+branches on the facet, control flow implicitly launders the value
+through the box to an unfaceted value. To fix this, we form a facet by
+taking into account \rmth{pc} and forming a facet using the
+meta-function \rmth{\formfacet{\ell}{v^+}{v^d}}. This meta-function is
+defined in Figure~\ref{fig:metafunctions}, and takes three arguments:
+the current \rmth{pc}, a positive view (\rmth{v^+}), and a ``default''
+view (\rmth{v^d}). Facet construction builds a facet with a spine
+corresponding to all of the labels in \rmth{pc}, and inserts
+\rmth{v^+} at the focus corresponding to \rmth{pc}, putting the
+default value \rmth{v^d} along all other branches. In the \code{box}
+form, the facet uses a default value of \bmth{\star}. In terms of our
+above example, this means that along the positive branch \code{x}
+would be set to \facet{\code{alice}}{1}{\star} (as the false branch of
+the \code{if} is taken), and along the subsequent negative branch
+\code{x} is extended to \facet{\code{alice}}{1}{0}.
 
 \begin{figure*}
       \begin{displaymath}
@@ -571,6 +634,14 @@ hiding the sensitive data.}
       \caption{Meta-functions used in our semantics}
       \label{fig:metafunctions}
 \end{figure*}
+
+Label creation allocates a label as a fresh address in the store,
+binding the specified label predicate and adding it to the
+environment. Observation evaluates the label expression to an address
+and executes the associated predicate. Once this is done, \textsc{Obs}
+uses the \rmth{\var{obs}} meta-function to select the appropriate branch
+based on the value returned by the predicate associated with the
+label.
 
 \section{Faceted Execution as Macros}
 
