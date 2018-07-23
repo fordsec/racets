@@ -66,6 +66,7 @@
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
 \newcommand{\colorMATH}{black!20!blue}
+\newcommand{\colorID}{black!20!blue}
 \newcommand{\colorCOMM}{0.133,0.545,0.133}
 \newcommand{\colorFAC}{black!20!red}
 \newcommand{\blue}[1] {{\color{\colorMATH} #1}}
@@ -85,7 +86,7 @@
 
 \begin{document}
 
-\title{Racets: Embedding Policy{-}Agnostic Programming in Racket}
+\title{Racets: Policy{-}Agnostic Programming in Racket}
 
 \author{Kristopher Micinski}
 \affiliation{%
@@ -306,7 +307,7 @@ facets, \code{mark-hit} cannot be immediately applied, as the argument
 \code{board} is a facet. Faceted execution ``splits'' the execution of
 the function on faceted arguments, running it first on the positive
 branch, then again on the negative branch. Finally, the results of
-each branch are merged to produce a facet:
+each branch are merged to produce a facet.
 
 %% \begin{center}
 %%   \begin{tikzpicture}
@@ -321,7 +322,7 @@ each branch are merged to produce a facet:
 %%   \end{tikzpicture}
 %% \end{center}
 
-Because the applied function could be stateful, faceted execution also
+Because the applied function can be stateful, faceted execution also
 records the current privilege level in a \emph{program counter}. The
 program counter is used to build facets when writes are made to the
 store inside of a privileged context. We expand upon these subtleties
@@ -524,31 +525,43 @@ We now present a semantics for a core language (\lang) which includes
 facets. Our presentation largely mirrors that of Austin et
 al.~\cite{Austin:2013}. The syntax of our language---reminiscent of
 Scheme---is shown in Figure~\ref{fig:syntax}. \lang extends the lambda
-calculus with references (which have interact with facets in a subtle
+calculus with references (which have interactions with facets in a subtle
 way) and three forms unique to faceted execution: facet construction, 
 label creation, and facet observation.
 
-Our semantics is shown in Figure~\ref{fig:semantics}. As faceted
-execution is an extension of the lambda calculus with references, we
-present the parts of the semantics unique to faceted execution in
-red. Base values in our semantics include addresses (used for boxes),
-constants, closures. We also include a special value \bmth{\star},
-which represents lazy failure: \bmth{\star} helps define the semantics
-of store update within a privileged context.
+Our semantics is shown in Figure~\ref{fig:semantics}. As \lang is an
+extension of the lambda calculus with references, we present the parts
+unique to faceted execution in \fcol{red}, while keeping the lambda
+calculus with references in \blue{blue}. Base values in our semantics
+include addresses (used for boxes), constants, and closures. We also
+include a kind of lazy failure (\bmth{\star}), which is necessary for
+defining store update within a protected context.
 
 Values in our semantics are either (unfaceted) base values or facets
-composed of a label and two branches. Facets can nest, allowing trees
+<<<<<<< HEAD
+composed of a label and two branches. Facets can be nested, allowing trees
 of faceted values. We define \emph{branches} as positive or negative
 labels. The program counter \rmth{pc} tracks the set of labels in the
 execution context. For example, to apply a faceted function to a value
-(for example \bmth{(\facet{\ell}{\lambda x.~0}{\lambda x.~1} 1)}), the
+(e.g. \bmth{(\facet{\ell}{\lambda x.~0}{\lambda x.~1} 1)}), the
 semantics first applies the function along the positive branch
 extending the pc with \bmth{+\ell}, then applies the negative branch
 extending the pc with \bmth{-\ell}.
+=======
+composed of a label and two branches. Facets can nest, allowing trees
+of faceted values. We use the term \emph{branches} to refer to
+positive or negated labels. Collections of branches define the program
+counter \rmth{pc}, which tracks the set of branches in the current
+context. For example, to apply a faceted function to a value (as in
+the application of \bmth{\facet{\ell}{\lambda x.~0}{\lambda x.~1}}),
+the semantics first applies \bmth{\lambda x.~0} while extending \rmth{pc}
+with \rmth{+\ell}, then applies the negative branch extending
+\rmth{pc} with \rmth{-\ell}.
+>>>>>>> a9288fe956f3f1d424f26ad9088ab1d5fcad5445
 
 The reduction relation \bmth{e, \rho, \sigma \Downarrow_{pc}^E \sigma,
   v} reduces an expression, environment, and store to a resulting
-store and value. The first three rules (in all blue) are unchanged
+store and value. The first three rules (all in blue) are unchanged
 from the standard interpretation in the lambda calculus. The
 \textsc{Apply} rule calls out to the helper relation \rmth{(v~v),
   \rho, \sigma \Downarrow_{pc}^A \sigma, v}, which applies a
@@ -560,25 +573,27 @@ immediately to the \bmth{\Downarrow_{pc}^E} relation.
 In the case that a faceted value is applied, \rmth{\Downarrow_{pc}^A}
 performs one of three functions, based on the relation of \rmth{\ell}
 to \rmth{pc}. If there is no occurrence of either \rmth{+\ell} or
-\rmth{-\ell} in \rmth{pc}, then the semantics must split the
-application. To do this, it applies both the positive and negative
-branches after extending \rmth{pc}. After reducing both branches to a
-value, the result is then formed into a facet. If \rmth{+\ell \in pc},
-then the semantics has already branched on the label \rmth{\ell}, so
-splitting would be redundant. In this case, \rmth{\Downarrow_{pc}^A}
-simply selects the positive branch to apply and continues without
-splitting. The symmetric case occurs in \textsc{App-Facet-Neg}. Facet
-formation follows this pattern, accounting for the relation of
-\rmth{\ell} to \rmth{pc}.
+\rmth{-\ell} in \rmth{pc}, then the semantics has not yet branched on
+\rmth{\ell}, and therefore must split the application. To do this, it
+applies both the positive and negative branches after extending
+\rmth{pc}. After reducing both branches to values, the results are
+formed into a facet. If \rmth{+\ell \in pc}, then the semantics has
+already branched on the label \rmth{\ell}, so splitting would be
+redundant. In this case, \rmth{\Downarrow_{pc}^A} simply selects the
+positive branch to apply and continues without splitting. The
+symmetric case occurs in \textsc{App-Facet-Neg}. Facet formation
+follows this pattern, accounting for the relation of \rmth{\ell} to
+\rmth{pc}.
 
-The rule \text{Box}, \textsc{Unbox}, and \textsc{Set} are similar to
-the standard implementation of boxes, but with a slight twist: box
-creation, reads, and writes may occur within a privilaged context. To
-understand why, consider the following example\footnote{Our formal
-  semantics elides \code{if}, though it may be obtained via a Church
-  encoding if desired as in Austin et al.\cite{Austin:12}. Our
-  implementation includes \code{if} but not other constructs such as
-  \code{cond}}:
+The rules \textsc{Box}, \textsc{Unbox}, and \textsc{Set} appear
+similar to the standard implementation of boxes, but employ several
+meta-functions to do their work. This is because box creation, reads,
+and writes may occur within a privilaged context, and care must be
+taken to form facets when \rmth{pc} is nonempty. To understand why,
+consider the following example\footnote{Our formal semantics elides
+  \code{if}, though it may be obtained via a Church encoding if
+  desired as in Austin et al.\cite{Austin:12}. Our implementation
+  includes \code{if} but not other constructs such as \code{cond}}:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=boxexample]
 (define x (box 0))
@@ -606,12 +621,19 @@ the \code{if} is taken), and along the subsequent negative branch
 \code{x} is extended to \facet{\code{alice}}{1}{0}.
 
 \begin{figure*}
+      %\begin{displaymath}
+      %  \begin{array}{rclrr}
+      %    {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
+      %    {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
+      %    {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
+      %    {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
+       % \end{array}
+      %\end{displaymath}
       \begin{displaymath}
         \begin{array}{rclrr}
-          {read(\sigma, \alpha, pc)} & {=} & {\sigma(\alpha)} & & \\
-          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_1, pc)} & \textit{if} ~ {+\ell} \in pc & \\
-          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {read(\sigma, v_2, pc)} & \textit{if} ~ {-\ell} \in pc & \\
-          {read(\sigma, \facet{\ell}{v_1}{v_2}), pc} & = & {\formfacet{\ell}{read(\sigma, v_1, pc)}{read(\sigma, v_2, pc)}} & \textit{otherwise} &
+          {\formfacet{\varnothing}{v_1}{v_2}} & {=} & {v_1} \\
+          {\formfacet{\{+\ell\} \cup rest}{v_1}{v_2}} & {=} & {\facet{\ell}{\formfacet{rest}{v_1}{v_2}}{v_2}} \\
+          {\formfacet{\{-\ell\} \cup rest}{v_1}{v_2}} & {=} & {\facet{\ell}{v_2}{\formfacet{rest}{v_1}{v_2}}}
         \end{array}
       \end{displaymath}
       \\
@@ -622,26 +644,44 @@ the \code{if} is taken), and along the subsequent negative branch
           & & & \textit{and} ~ {\sigma'' = \var{write}(\sigma', v_2, pc \cup \{-\ell\}, v)}
         \end{array}
       \end{displaymath}
-      \\
-      \begin{displaymath}
-        \begin{array}{rclrr}
-          {obs(\ell, b, bv)} & {=} & {bv} & & \\
-          {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
-          {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
-          {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = & \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
-        \end{array}
-      \end{displaymath}
+      %\\
+      %\begin{displaymath}
+      %  \begin{array}{rclrr}
+      %    {obs(\ell, b, bv)} & {=} & {bv} & & \\
+      %    {obs(\ell, true,} \facet{\ell}{v_1}{v_2}) & = & {v_1} & & \\
+      %    {obs(\ell, false,} \facet{\ell}{v_1}{v_2}) & = & {v_2} & & \\
+      %    {obs(\ell, b,} \facet{\ell'}{v_1}{v_2}) & = & \facet{\ell'}{obs(\ell,b,v_1)}{obs(\ell,b,v_2)} & \textit{where} & {\ell} \neq {\ell'}
+      %  \end{array}
+      %\end{displaymath}
       \caption{Meta-functions used in our semantics}
       \label{fig:metafunctions}
 \end{figure*}
 
 Label creation allocates a label as a fresh address in the store,
 binding the specified label predicate and adding it to the
-environment. Observation evaluates the label expression to an address
-and executes the associated predicate. Once this is done, \textsc{Obs}
-uses the \rmth{\var{obs}} meta-function to select the appropriate branch
-based on the value returned by the predicate associated with the
-label.
+environment. Labels must be store-allocated rather than bound in the
+lexical environment, as the latter would allow the label to be rebound
+by anyone using the facet:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=rebindingexample]
+(define alice-label (let-label l (lambda (x) (= x alice)) l))
+(define x (fac alice-label 1 0))
+(let ([alice-label (let-label l (lambda (x) #t) l)]) |\label{lineno:alicelab}|
+  (obs alice-label 1 x)) ; Should return |\facet{\texttt{alice-label}}{1}{0}|
+\end{lstlisting}
+
+The \code{obs} form in the above example ought to return
+\facet{\code{alice-label}}{1}{0}. But if we pull labels from the
+lexical environment, the binding on line~\ref{lineno:alicelab} shadows
+the policy originally associated with the facet.
+
+Last, observation evaluates the label expression to an address and
+executes the associated predicate. Once this is done, \textsc{Obs}
+uses the \rmth{\var{obs}} meta-function to select the appropriate
+branch based on the value returned by the predicate associated with
+the label. This meta-function accounts for the fact that the label
+being observed may appear arbitrarily deep in the facet (or not at
+all).
 
 \section{Faceted Execution as Macros}
 
@@ -669,9 +709,7 @@ Next, we must choose a representation of labels. At first
 consideration, it appears sensible to represent labels simply as
 closures. After all, labels are simply used as predicates testing
 whether or not to reveal a facet's positive or negative
-branch. However, there is a subtle issue: facet canonicalization
-relies upon a total order for labels. In light of this, we represent
-labels as a pair of a name and a policy:
+branch. Therefore, we represent labels as a pair of a name and a policy:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=racets]
 (struct labelpair (name pol))
@@ -721,7 +759,7 @@ distint colors for each case:
   {\color{purple}
     \inferrule[\textsc{Fac-Create-Split}]
               {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
-                \boxed{\{+\ell, -\ell\} \cup pc = \varnothing} \\\\
+                \boxed{\{+\ell, -\ell\} \cap pc = \varnothing} \\\\
                 e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
                 e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
                 v = \formfacet{pc}{v_1}{v_2}}
@@ -739,7 +777,7 @@ idiom in our faceted semantics, as we often want to select the
 appropriate branch of a facet if its label already exists in
 \bmth{pc}.
 
-At first glance, it may not be obvious that we even \emph{need} a maco
+At first glance, it may not be obvious that we even \emph{need} a macro
 for facet creation. But according to our semantics, the following
 snippet should produce \code{#t} if \bmth{+\ell \in pc}:
 
