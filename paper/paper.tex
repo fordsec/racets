@@ -168,34 +168,39 @@ decouples the implementation of privacy policies from the code that
 operates on sensitive data. This frees developers to write programs as
 they would normally, without inserting logic to manage the policy
 directly into application code. Instead, data is labeled with its
-policy as it enters the system, and propagates through the program as
-computation progresses. Policy-agnostic programming is often
-implemented using faceted execution, a dynamic information-flow
-monitor encoding sensitive values as \emph{facets}: decision trees
-specifying different views of that data. For example, the facet
-\facet{Alice}{\code{#t}}{\code{#f}} represents a value that should
-appear to Alice as \code{#t} and to everyone but Alice as \blue{\code{#f}}.
+policy as it enters the system, and policies propagate through the
+program alongside data as computation progresses. Policy-agnostic
+programming is often implemented using \emph{faceted execution}, a
+dynamic information-flow monitor encoding sensitive values as
+\emph{facets}: decision trees specifying different views of that
+data. For example, the facet \facet{Alice}{\code{true}}{\code{false}}
+represents a value that should appear to Alice as \blue{\code{true}} and to
+everyone but Alice as \blue{\code{false}}.
 
 Faceted execution propagates facets by extending core linguistic
-primitives (such as function application). For example, consider the
-application \code{(not x)} where \code{x} is
-\blue{\facet{Alice}{\code{#t}}{\code{#f}}}. The programmer intends the
-call to \code{not} to be operating on a \code{boolean?}, but because
-\code{x} is a facet this call produces \code{#f} instead. The correct
-way to interpret function application on facets is to distribute the
-application through each branch, producing \zw{producing ...?} %% \code{m
-  %% \mc{ \facet{Alice}{\code{#f}}{\code{not #t}}}}
-. Other core forms
-(such as \code{if}, \code{cond}, etc...) require similar changes.
+primitives (such as function application) to handle faceted
+values. For example, consider the application \blue{\code{(x true)}} where
+\code{x} is \blue{\facet{Alice}{\lambda x.~\code{true}}{\code{not}}}.
+Racket's standard function application will fail here because Racket's
+\blue{\code{ppapp}} expects a procedure rather than a facet.  The correct way
+to interpret function application on facets is to distribute the
+application through each branch, producing
+\facet{Alice}{\code{true}}{\code{false}}. Many other core forms (such
+as \code{if}, \code{set!}, etc...) require similar changes.
 
-The core linguistic changes required by faceted execution have led to
-relatively inelegant and heavyweight implementations thusfar. For
-example, Flanagan et. al (who first presented faceted execution)
-extended the JavaScript runtime to account for faceted
-values. Similarly, the Jeeves programming language does (what does it
-do?)\zw{Need to complete this sentence}. By contrast, Racket's 
-highly-expressive macro system allows even
-core forms (such as \code{#\%app}) to be redefined with relative ease.
+Policy-agnostic programming promotes the idea that programmers should
+be able to write programs ``normally'', without concerning themselves
+with how privacy policies are enforced. And yet, we believe that the
+relatively foundational linguistic changes required to enable faceted
+execution have hindered implementations thusfar. For example, the
+first implementation of faceted execution (by Austin et
+al.~\cite{Austin:12}) extended a JavaScript interpreter to account for
+faceted values. Other implementations use monads~\cite{Schmitz:2016}
+or rely upon third-party macro systems~\cite{Yang:2016}. So far, we
+know of no implementation of faceted execution that works seamlessly
+alongside the language. By contrast, Racket has a powerful macro
+system, allowing essentially any linguistic form (including function
+application) to be extended with arbitrary semantics.
 
 In this paper we present Racets, an implementation of policy-agnostic
 programming in Racket via macros. Racets provides facilities for
@@ -238,12 +243,12 @@ whether the guess was a hit:
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
 (define (mark-hit board x y)
   (if (null? board)
-      (cons board #f)
+      (cons board false)
       (let* ([fst (car board)]
              [rst (cdr board)])
         (if (and (= (car fst) x)
                  (= (cdr fst) y))
-            (cons rst #t)
+            (cons rst true)
             (let ([rst+b (mark-hit rst x y)])
               (cons (cons fst
                           (car rst+b))
@@ -337,7 +342,7 @@ faceted execution.
 \begin{figure}
 \begin{displaymath}
   \begin{array}{lcrcl}
-    \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{() \mid \code{\#t} \mid \code{\#f} \mid \ldots} \\
+    \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{() \mid \code{true} \mid \code{false} \mid \ldots} \\
     \blue{x} & \blue{\in} & \blue{var} & \blue{::=} & \blue{\ldots}  \\
     \blue{e} & \blue{\in} & \blue{exp} & \blue{::=} & \blue{c} \mid \blue{x} \\
     & & & \blue{\mid} & \blue{(\lambda ~ (x) ~ e) \mid (e ~ e)} \\
@@ -655,7 +660,7 @@ by anyone using the facet:
 \begin{lstlisting}[language=Racket,escapechar=|,name=rebindingexample]
 (define alice-label (let-label l (lambda (x) (= x alice)) l))
 (define x (fac alice-label 1 0))
-(let ([alice-label (let-label l (lambda (x) #t) l)]) |\label{lineno:alicelab}|
+(let ([alice-label (let-label l (lambda (x) true) l)]) |\label{lineno:alicelab}|
   (obs alice-label 1 x)) ; Should return |\facet{\texttt{alice-label}}{1}{0}|
 \end{lstlisting}
 
@@ -769,10 +774,10 @@ appropriate branch of a facet if its label already exists in
 
 At first glance, it may not be obvious that we even \emph{need} a macro
 for facet creation. But according to our semantics, the following
-snippet should produce \code{#t} if \bmth{+\ell \in pc}:
+snippet should produce \code{true} if \bmth{+\ell \in pc}:
 
 \begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=other,numbers=none]
-(fac l #t (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
+(fac l true (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
 \end{lstlisting}
 
 If we were to implement \code{fac} as a function, it would force
