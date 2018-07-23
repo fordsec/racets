@@ -279,7 +279,7 @@ should appear to her, and the negative (right) to everyone else:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
   (define alice-board
-          (facet alice-label (add-pieces (makeboard) x|$_1$| y|$_1$| |$...$|) star))
+          (facet alice-label (add-pieces (makeboard) x|$_1$| y|$_1$| |$...$|) (|\bmth{\star}|)))
 \end{lstlisting}
 
 In the above example, Alice uses \blue{$\star$} (lazy failure) to
@@ -347,13 +347,13 @@ faceted execution.
     \blue{e} & \blue{\in} & \blue{exp} & \blue{::=} & \blue{c} \mid \blue{x} \\
     & & & \blue{\mid} & \blue{(\lambda ~ (x) ~ e) \mid (e ~ e)} \\
     & & & \blue{\mid} & \blue{(\code{box} ~ e) \mid (\code{unbox} ~ e) \mid (\code{set!} ~ e ~ e)} \\
-    & & & \blue{\mid} & \blue{(\code{let-label} ~ \ell ~ e ~ e)} \\
-    & & & \blue{\mid} & \blue{(\code{facet} ~ e ~ e ~ e)} \\
-    & & & \blue{\mid} & \blue{(\code{obs} ~ e ~ e ~ e)} \\
+    & & & \fcol{\mid} & \fcol{(\code{let-label} ~ \ell ~ e ~ e)} \\
+    & & & \fcol{\mid} & \fcol{(\code{facet} ~ e ~ e ~ e)} \\
+    & & & \fcol{\mid} & \fcol{(\code{obs} ~ e ~ e ~ e)} \\
   \end{array}
 \end{displaymath}
 \label{fig:syntax}
-\caption{Syntax of \lang}
+\caption{Syntax of \lang. Forms unique to facets are shown in \fcol{red}.}
 \end{figure}
 
 \begin{figure*}
