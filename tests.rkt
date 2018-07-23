@@ -1,8 +1,5 @@
 #lang reader "racets.rkt"
 
-(define con0 (let-label con0 (lambda (x) (x)) con0))
-(define con1 (let-label con1 (lambda (x) x) con1))
-
 (module+ test
   (require rackunit)
   (require rackunit/text-ui)

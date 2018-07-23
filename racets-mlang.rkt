@@ -52,6 +52,12 @@
 
  ; mutate a reference cell
  ref-set!
+
+ ; exportable lambda
+ ext-lambda
+
+ ; Lazy failure
+ ★
  )
 
 ; Lambdas are rewritten into tagged closures so we can implement
@@ -59,10 +65,21 @@
 (define-syntax-rule (fac-lambda xs expr)
   (fclo (lambda xs expr)))
 
+; Create an "external" lambda to hand across a module boundary. This
+; is *not* an fclo, but rather it is a "plain" Racket lambda. This is
+; potentially bad: if you hand off things to modules that do not
+; expect facets, they will crash. So to use this correctly, you must
+; use an explicit `obs` form before closing over faceted things in an
+; ext-lambda form.
+(define-syntax-rule (ext-lambda xs expr)
+  (lambda xs expr))
+
 (define-syntax-rule (let-label l (lambda xs e) body)
   (let ([l (labelpair (gensym 'lab)
                       (lambda xs e))])
     body))
+
+(define-syntax-rule (★) (lfail))
 
 ; Syntax for facet construction
 ; TODO: FIX!
@@ -128,7 +145,7 @@
      #`(let ([var vr]) ; let-bind vr to evaluate
          (if (facet? var)
              ; if var is a facet,
-             (box (construct-facet-optimized (set->list (current-pc)) var 0))
+             (box (construct-facet-optimized (set->list (current-pc)) var (lfail)))
              ; else
              (box var)))]))
 

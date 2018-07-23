@@ -17,6 +17,9 @@
 ; Tagged faceted closures
 (struct fclo (clo) #:transparent)
 
+; Lazy failure
+(struct lfail ())
+
 ; Label comparison
 (define (label<? l1 l2)
   (match (cons l1 l2)
