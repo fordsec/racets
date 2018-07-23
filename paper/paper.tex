@@ -538,16 +538,6 @@ include a kind of lazy failure (\bmth{\star}), which is necessary for
 defining store update within a protected context.
 
 Values in our semantics are either (unfaceted) base values or facets
-<<<<<<< HEAD
-composed of a label and two branches. Facets can be nested, allowing trees
-of faceted values. We define \emph{branches} as positive or negative
-labels. The program counter \rmth{pc} tracks the set of labels in the
-execution context. For example, to apply a faceted function to a value
-(e.g. \bmth{(\facet{\ell}{\lambda x.~0}{\lambda x.~1} 1)}), the
-semantics first applies the function along the positive branch
-extending the pc with \bmth{+\ell}, then applies the negative branch
-extending the pc with \bmth{-\ell}.
-=======
 composed of a label and two branches. Facets can nest, allowing trees
 of faceted values. We use the term \emph{branches} to refer to
 positive or negated labels. Collections of branches define the program
@@ -557,7 +547,6 @@ the application of \bmth{\facet{\ell}{\lambda x.~0}{\lambda x.~1}}),
 the semantics first applies \bmth{\lambda x.~0} while extending \rmth{pc}
 with \rmth{+\ell}, then applies the negative branch extending
 \rmth{pc} with \rmth{-\ell}.
->>>>>>> a9288fe956f3f1d424f26ad9088ab1d5fcad5445
 
 The reduction relation \bmth{e, \rho, \sigma \Downarrow_{pc}^E \sigma,
   v} reduces an expression, environment, and store to a resulting
