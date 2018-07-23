@@ -80,13 +80,14 @@
 \newcommand{\kris}[1]{\comm[\color{blue}]{Kris}{#1}}
 \newcommand{\tom}[1]{\comm[\color{orange}]{Tom}{#1}}
 \newcommand{\lang}[0]{$\lambda_\textsc{FE}$\xspace}
+\newcommand{\racets}[0]{$\textsc{Racets}$\xspace}
 \newcommand{\facet}[3]{{\fcol{\ensuremath{\langle \, {#1} \: ? \: {#2} \diamond \: {#3} \, \rangle}}}}
 \newcommand{\formfacet}[3]{{\fcol{\ensuremath{\langle \langle \, {#1} \: ? \: {#2} \diamond \: {#3} \,  \rangle \rangle}}}}
 \newcommand{\var}[1]{\mathit{#1}}
 
 \begin{document}
 
-\title{Racets: Policy{-}Agnostic Programming in Racket}
+\title{\racets: Policy{-}Agnostic Programming in Racket}
 
 \author{Kristopher Micinski}
 \affiliation{%
@@ -107,7 +108,7 @@
 \email{zwang10@haverford.edu}
 \author{Thomas Gilray}
 \affiliation{%
- \institution{University of Alabama}
+ \institution{University of Alabama, Birmingham}
  \city{Birmingham}
  \state{AL}
  \country{USA}}
@@ -145,7 +146,7 @@
 %% \ccsdesc{Computer systems organization~Robotics}
 %% \ccsdesc[100]{Networks~Network reliability}
 
-\keywords{security, faceted execution, information flow, macros}
+\keywords{security, faceted execution, macros, information flow, languages as libraries}
 
 \maketitle
 
@@ -153,70 +154,83 @@
 
 \section{Introduction}
 
-As our systems become more interconnected, they consume an
-ever-growing amount of data.  System designers communicate to users
-how their data is used via a \emph{privacy policy}. Unfortunately,
-implementing these policies correctly is challenging: users often have
+As information systems become more interconnected and complex, they consume an
+ever-growing amount of private data. System designers communicate to users
+how their data may be used via a \emph{privacy policy}. Unfortunately,
+implementing such policies correctly is challenging: users often have
 partial control over the policy (e.g., whether their phone number is
-publicly visible or private) and policies change frequently (e.g.,
-after new laws are passed). As policies evolve, developers face
-massive (re)engineering efforts to ensure that implementations match
-the espoused policy.
+publicly visible or private) and policies can change frequently.
+Not only can specific privacy policies be highly dynamic (dependent on runtime values),
+but the process of improving privacy policies can be highly dynamic across time.
+As policies evolve, developers face massive (re)engineering efforts to
+ensure that implementations continue to match the policy at every relevant
+point in the codebase.
 
 \emph{Policy-agnostic programming} is a linguistic paradigm that
 decouples the implementation of privacy policies from the code that
-operates on sensitive data. This frees developers to write programs as
-they would normally, without inserting logic to manage the policy
-directly into application code. Instead, data is labeled with its
-policy as it enters the system, and policies propagate through the
-program alongside data as computation progresses. Policy-agnostic
-programming is often implemented using \emph{faceted execution}, a
-dynamic information-flow monitor encoding sensitive values as
-\emph{facets}: decision trees specifying different views of that
-data. For example, the facet \facet{Alice}{\code{true}}{\code{false}}
-represents a value that should appear to Alice as \blue{\code{true}} and to
-everyone but Alice as \blue{\code{false}}.
+operates on sensitive data. This frees developers to write programs mostly
+as they would for insecure code, without inserting specific logic to manage
+information-flow policies directly into application code. Instead, data is
+labeled with its policy as it enters the system and such labels propagate through
+the program, alongside data, as computation progresses. When a secure value needs
+to be introspected upon (or propagates outside the application), its policy
+can be invoked at this point dynamically. This paradigm aims to permit
+code manipulating sensitive data to be written in a manner entirely orthogonal to
+policies themselves.
 
-Faceted execution propagates facets by extending core linguistic
-primitives (such as function application) to handle faceted
-values. For example, consider the application \blue{\code{(x true)}} where
+\emph{Faceted execution} (FE) is a highly expressive (but potentially expensive)
+language semantics enabling policy-agnostic programming. In FE, dynamic information-flow
+monitors instrument the program, encoding sensitive values as \emph{faceted values}:
+decision trees specifying different views of data according to different possible security labels.
+For example, the faceted value \facet{Alice}{\code{true}}{\code{false}}
+represents a value that should appear to Alice as \blue{\code{true}} and to
+everyone except Alice as \blue{\code{false}}. Faceted execution propagates distinct facets
+of a value by extending core linguistic primitives (such as function application).
+For example, consider the application \blue{\code{(x true)}} where
 \code{x} is \blue{\facet{Alice}{\lambda x.~\code{true}}{\code{not}}}.
 Racket's standard function application will fail here because Racket's
-\blue{\code{ppapp}} expects a procedure rather than a facet.  The correct way
-to interpret function application on facets is to distribute the
-application through each branch, producing
-\facet{Alice}{\code{true}}{\code{false}}. Many other core forms (such
-as \code{if}, \code{set!}, etc...) require similar changes.
+\blue{\code{ppapp}} expects a procedure rather than a facet. Instead, the proper way
+to interpret function application on faceted values is to distribute the
+application over all (in this case, both) facets, producing
+\facet{Alice}{\code{true}}{\code{false}}: if Alice is viewing, the application yielded true,
+otherwise it yielded false, so both are computed until the value is explicitly observed
+with specified permissions. Many other core forms (such
+as \code{if}, \code{set!}, etc...) require similar changes to handle faceted
+values correctly.
 
 Policy-agnostic programming promotes the idea that programmers should
 be able to write programs ``normally'', without concerning themselves
-with how privacy policies are enforced. And yet, we believe that the
+with how privacy policies are enforced. Unfortunately, the
 relatively foundational linguistic changes required to enable faceted
-execution have hindered implementations thusfar. For example, the
-first implementation of faceted execution (by Austin et
-al.~\cite{Austin:12}) extended a JavaScript interpreter to account for
-faceted values. Other implementations use monads~\cite{Schmitz:2016}
-or rely upon third-party macro systems~\cite{Yang:2016}. So far, we
-know of no implementation of faceted execution that works seamlessly
-alongside the language. By contrast, Racket has a powerful macro
-system, allowing essentially any linguistic form (including function
-application) to be extended with arbitrary semantics.
+execution have hindered implementations thusfar. Dynamic generation
+of first-class security labels, tracking an arbitrary number of
+facets per value, and keeping facted-value trees in a canonical order,
+are all central challenges in any practical implementation. For example, the
+first implementation of FE (by \citet{Austin:2012}) extended
+a JavaScript interpreter to account for faceted values. Other
+implementations use monads~\cite{Schmitz:2016}
+or rely upon third-party macro systems~\cite{Yang:2016}. We
+know of no existing implementation of FE that aims to interoperate seamlessly
+with code written in the host language. By contrast, Scheme boasts a powerful
+hygenic macro system that allows essentially any linguistic form
+to be modified arbitrarily.
 
-In this paper we present Racets, an implementation of policy-agnostic
-programming in Racket via macros. Racets provides facilities for
-creating policies and faceting secure data with those policies. Racets
+In this paper we present \racets, an implementation of policy-agnostic
+programming in Racket via macros. \racets provides facilities for
+creating policies and faceting secure data with those policies. \racets
 also extends several core forms in Racket to work with faceted
 values (our implementation is detailed in Section~\ref{sec:implementation}). We
-have measured the overhead of Racets in several microbenchmarks, and
-have used Racets to implement a small server-based
-board-game (detailed in Section~\ref{sec:evaluation}). We see Racets as a
+have measured the overhead of \racets in several microbenchmarks, and
+have used \racets to implement a small server-based
+board-game (detailed in Section~\ref{sec:overview}). We see \racets as a
 promising prototype for policy-agnostic programming in Racket, and
-conclude with several future directions in Section~\ref{sec:conclusion}.
+conclude with discussion of future directions in Section~\ref{sec:conclusion}.
 
 \section{Overview of Faceted Execution}
+\label{sec:overview}
 
 To introduce our setting we present the implementation of Battleship,
-a small guessing-based board game, in Racets (this section presents a
+a small guessing-based board game, in \racets (this section presents a
 distilled version of our case study in
 Section~\ref{sec:case-study}). In this game each player has a
 grid-based board on which they place tiles (or ``ships''). The players
@@ -679,15 +693,16 @@ all). \zw{We elide the description of the meta-function \rmth{\var{obs}}
 here, but it is fully described in Austin et al.~\cite{Austin:2012}}
 
 \section{Faceted Execution as Macros}
+\label{sec:implementation}
 
 The semantics of faceted execution is an extension of the lambda
 calculus, leading to a natural question: can we use Racket's macros to
 extend Racket to faceted execution? We will see that the answer is
 yes, and the translation from the big-step rules is surprisingly
 straightforward. This section of our paper describes the design of
-Racets, a prototype implementation of faceted execution using Racket
+\racets, a prototype implementation of faceted execution using Racket
 macros. In Section~\ref{sec:conclusion} we remark upon current
-directions scaling Racets to the whole of Racket.
+directions scaling \racets to the whole of Racket.
 
 \paragraph*{Choosing a Representation for Facets, Labels, and Program Counters}
 
@@ -722,7 +737,7 @@ Similarly, program counters are sets of branches. However, we must
 still ask how we will keep track of the ``current'' program
 counter. Our implementation uses Racket's parameters, though other
 mechanisms (such as continuation marks\kris{cite}, to which parameters
-macro-expand) could also be used. Racets defines the parameter
+macro-expand) could also be used. \racets defines the parameter
 \code{current-pc}, and updates it as computation progresses:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=racets]
@@ -852,18 +867,18 @@ treated as a box due to assignment conversion. We have two main
 options:
 
 \begin{itemize}
-\item Introduce an explicit \code{unbox} form in Racets, trusting the
+\item Introduce an explicit \code{unbox} form in \racets, trusting the
   programmer to explicitly use our implementation of \code{unbox} on
   potentially-faceted objects.
 
 \item Walk over Racket code (after macro-expansion via
   \code{local-expand}) transforming variable references to use
-  explicit \code{unbox} forms from Racets.
+  explicit \code{unbox} forms from \racets.
 \end{itemize}
 
-For our prototype of Racets, we have chosen to implement the
+For our prototype of \racets, we have chosen to implement the
 first. This leads to a relatively simple implementation, but
-essentially trusts the programmer to use Racets' \code{unbox} forms
+essentially trusts the programmer to use \racets' \code{unbox} forms
 when necessary.
 
 \begin{figure}
@@ -890,11 +905,11 @@ when necessary.
                    (facet-right (unbox var))
                    (set-add pc (neg (facet-labelname var))))))))]))
 \end{lstlisting}
-\caption{Racets' implementation of \code{set!}}
+\caption{\racets' implementation of \code{set!}}
 \label{fig:setbang}
 \end{figure}
 
-Racets defines a \code{box} macro, along with \code{unbox} and
+\racets defines a \code{box} macro, along with \code{unbox} and
 \code{set!}. We include the definition of \code{set!} in
 Figure~\ref{fig:setbang}, which inlines the definition of the
 \textit{write} metafunction from Section~\ref{sec:semantics} to
@@ -918,7 +933,7 @@ By now we can anticipate a predictable pattern for implementing
 faceted execution: check \bmth{pc} to decide whether to branch left,
 right, or split. This is largely our strategy for handling faceted
 function application, with a small twist: we need to be able to apply
-functions from outside of Racets. For example, if we want to apply
+functions from outside of \racets. For example, if we want to apply
 builtin functions such as \code{display}, we need to be mindful of the
 fact that these functions cannot work with faceted arguments.
 
@@ -932,7 +947,7 @@ distributing the function through each branch of the facet.
 In general it is unsafe to apply an unknown function to a faceted
 value. This is because the unknown function may leak the facet's
 private information as a side-effect. Therefore, our current
-implementation of Racets allows programmers to apply external
+implementation of \racets allows programmers to apply external
 functions, but does not make any guarantee of safety. A better
 strategy may be to perform an \code{obs} before each call to a
 potentially-unsafe function. In general, we believe module
@@ -941,12 +956,12 @@ leave its study to future work.
 
 \section{Implementation and Evaluation}
 
-We have implemented Racets as a set of Racket macros which can be
+We have implemented \racets as a set of Racket macros which can be
 employed as a language using Racket's \texttt{\#lang reader}
 facility. So far, we have included macros for many of Racket's core
 forms including application, \code{if}, \code{lambda}, and
 references. We leave others (including continuation marks) to future
-work. Additionally, Racets does not support first-class control. There
+work. Additionally, \racets does not support first-class control. There
 has been recent work in handling exceptions in the context of faceted
 execution~\cite{Austin:17}, however reconciling first-class control in
 general remains (to our knowledge) an open problem.
@@ -956,9 +971,13 @@ faceted execution is much smaller than other systems: our core macros
 comprise only 170 source lines of Racket, with another 120 lines of
 library code to perform various facet-related functions. 
 
-We plan to make our prototype of Racets available publicly.
+We plan to make our prototype of \racets available publicly.
 
 \section{Conclusion}
+\label{sec:conclusion}
+
+asdf asdf
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{paper}
