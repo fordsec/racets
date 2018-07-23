@@ -65,8 +65,9 @@
     body))
 
 ; Syntax for facet construction
+; TODO: FIX!
 (define-syntax-rule (fac l v1 v2)
-  (mkfacet (labelpair-name l) v1 v2))
+  (construct-facet-optimized (set->list (set-union (current-pc) (set (pos (labelpair-name l))))) v1 v2))
 
 ; Observe l e1 e2
 ; l - The label being checked
@@ -117,7 +118,7 @@
                                                           (neg
                                                            (facet-labelname gv)))])
                         (iff (facet-right gv)))])
-                  (mkfacet (facet-labelname gv) left right))])
+                  (construct-facet-optimized (list (pos (facet-labelname gv))) left right))])
              (if gv et ef)))]))
 
 ; ref
@@ -185,9 +186,10 @@
                                     (set-add (current-pc)
                                              (neg (facet-labelname func)))])
                       (applyf (facet-right func)))])
-              (mkfacet (facet-labelname func)
-                       left
-                       right))]
+              (construct-facet-optimized
+               (list (pos (facet-labelname func)))
+               left
+               right))]
            ; An fclo coming from Racets
            [(fclo? func) ((fclo-clo func) . args)]
            ; Not an fclo. Must be a builtin, etc..
@@ -206,7 +208,7 @@
   (syntax-case stx ()
     [(_) #`#f]
     [(_ e0 es ...)
-     #`(fac-if e0 #t (fac-and es ...))]))
+     #`(fac-if e0 #t (fac-or es ...))]))
 
 ; Not sure what to do with continuations, we will have to handle other
 ; continuation-based stuff, too, eventually.

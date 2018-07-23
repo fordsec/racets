@@ -434,21 +434,21 @@ faceted execution.
           \inferrule[\textsc{Fac-Create-Split}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
             \{+\ell, -\ell\} \cap pc = \varnothing \\\\
-           e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
-           e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
-           v = \formfacet{pc}{v_1}{v_2}}
+           e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \and
+           e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \\\\
+           v = \formfacet{pc \cup \{+\ell\}}{v_1}{v_2}}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
           {\color{\colorFAC}
           \inferrule[\textsc{Fac-Create-Pos}]
-          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            + \ell \in pc \\\\
            e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
           & 
           {\color{\colorFAC}
           \inferrule[\textsc{Fac-Create-Neg}]
-          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
+          {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            - \ell \in pc \\\\
            e_3, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}     \end{array}
@@ -735,6 +735,7 @@ Facet creation appears as three separate rules in
 Figure~\ref{fig:semantics}, which we recapitulate here in three
 distint colors for each case:
 
+\kris{TODO: FIX THIS (make consistent w semantics)}
 \[\small
 \begin{array}{ccc}
   {\color{brown}
@@ -820,8 +821,10 @@ al.~\cite{Austin:2012}) we omit its definition here.
                                            (pos (facet-labelname l)))]))]
            [right (parameterize
                       ([current-pc (set-add (current-pc)
-                                            (neg (facet-labelname l)))]))]
-           (mkfacet (labelpair-name l) v1 v2)))]))
+                                            (neg (facet-labelname l)))]))])
+           (mkfacet (set-union (set (pos (labelpair-name l)))
+                                    (current-pc))
+                    v1 v2))]))
 \end{lstlisting}}
 }
 \caption{Facet creation as a macro}
@@ -862,7 +865,6 @@ For our prototype of Racets, we have chosen to implement the
 first. This leads to a relatively simple implementation, but
 essentially trusts the programmer to use Racets' \code{unbox} forms
 when necessary.
-
 
 \begin{figure}
 \small
