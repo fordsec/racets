@@ -941,6 +941,23 @@ leave its study to future work.
 
 \section{Implementation and Evaluation}
 
+We have implemented Racets as a set of Racket macros which can be
+employed as a language using Racket's \texttt{\#lang reader}
+facility. So far, we have included macros for many of Racket's core
+forms including application, \code{if}, \code{lambda}, and
+references. We leave others (including continuation marks) to future
+work. Additionally, Racets does not support first-class control. There
+has been recent work in handling exceptions in the context of faceted
+execution~\cite{Austin:17}, however reconciling first-class control in
+general remains (to our knowledge) an open problem.
+
+Because of Racket's flexible macro system, our implementation of
+faceted execution is much smaller than other systems: our core macros
+comprise only 170 source lines of Racket, with another 120 lines of
+library code to perform various facet-related functions. 
+
+We plan to make our prototype of Racets available publicly.
+
 \section{Conclusion}
 
 \bibliographystyle{ACM-Reference-Format}
