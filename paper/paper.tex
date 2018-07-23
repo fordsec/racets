@@ -66,6 +66,7 @@
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
 \newcommand{\colorMATH}{black!20!blue}
+\newcommand{\colorID}{black!20!blue}
 \newcommand{\colorCOMM}{0.133,0.545,0.133}
 \newcommand{\colorFAC}{black!20!red}
 \newcommand{\blue}[1] {{\color{\colorMATH} #1}}
@@ -528,27 +529,28 @@ calculus with references (which have interact with facets in a subtle
 way) and three forms unique to faceted execution: facet construction, 
 label creation, and facet observation.
 
-Our semantics is shown in Figure~\ref{fig:semantics}. As faceted
-execution is an extension of the lambda calculus with references, we
-present the parts of the semantics unique to faceted execution in
-red. Base values in our semantics include addresses (used for boxes),
-constants, closures. We also include a special value \bmth{\star},
-which represents lazy failure: \bmth{\star} helps define the semantics
-of store update within a privileged context.
+Our semantics is shown in Figure~\ref{fig:semantics}. As \lang is an
+extension of the lambda calculus with references, we present the parts
+unique to faceted execution in \fcol{red}, while keeping the lambda
+calculus with references in \blue{blue}. Base values in our semantics
+include addresses (used for boxes), constants, and closures. We also
+include a kind of lazy failure (\bmth{\star}), which is necessary for
+defining store update within a protected context.
 
 Values in our semantics are either (unfaceted) base values or facets
 composed of a label and two branches. Facets can nest, allowing trees
-of faceted values. We define \emph{branches} as positive or negative
-labels. The program counter \rmth{pc} tracks the set of labels in the
-execution context. For example, to apply a faceted function to a value
-(for example \bmth{(\facet{\ell}{\lambda x.~0}{\lambda x.~1} 1)}), the
-semantics first applies the function along the positive branch
-extending the pc with \bmth{+\ell}, then applies the negative branch
-extending the pc with \bmth{-\ell}.
+of faceted values. We use the term \emph{branches} to refer to
+positive or negated labels. Collections of branches define the program
+counter \rmth{pc}, which tracks the set of branches in the current
+context. For example, to apply a faceted function to a value (as in
+the application of \bmth{\facet{\ell}{\lambda x.~0}{\lambda x.~1}}),
+the semantics first applies \bmth{\lambda x.~0} while extending \rmth{pc}
+with \rmth{+\ell}, then applies the negative branch extending
+\rmth{pc} with \rmth{-\ell}.
 
 The reduction relation \bmth{e, \rho, \sigma \Downarrow_{pc}^E \sigma,
   v} reduces an expression, environment, and store to a resulting
-store and value. The first three rules (in all blue) are unchanged
+store and value. The first three rules (all in blue) are unchanged
 from the standard interpretation in the lambda calculus. The
 \textsc{Apply} rule calls out to the helper relation \rmth{(v~v),
   \rho, \sigma \Downarrow_{pc}^A \sigma, v}, which applies a
@@ -560,25 +562,27 @@ immediately to the \bmth{\Downarrow_{pc}^E} relation.
 In the case that a faceted value is applied, \rmth{\Downarrow_{pc}^A}
 performs one of three functions, based on the relation of \rmth{\ell}
 to \rmth{pc}. If there is no occurrence of either \rmth{+\ell} or
-\rmth{-\ell} in \rmth{pc}, then the semantics must split the
-application. To do this, it applies both the positive and negative
-branches after extending \rmth{pc}. After reducing both branches to a
-value, the result is then formed into a facet. If \rmth{+\ell \in pc},
-then the semantics has already branched on the label \rmth{\ell}, so
-splitting would be redundant. In this case, \rmth{\Downarrow_{pc}^A}
-simply selects the positive branch to apply and continues without
-splitting. The symmetric case occurs in \textsc{App-Facet-Neg}. Facet
-formation follows this pattern, accounting for the relation of
-\rmth{\ell} to \rmth{pc}.
+\rmth{-\ell} in \rmth{pc}, then the semantics has not yet branched on
+\rmth{\ell}, and therefore must split the application. To do this, it
+applies both the positive and negative branches after extending
+\rmth{pc}. After reducing both branches to values, the results are
+formed into a facet. If \rmth{+\ell \in pc}, then the semantics has
+already branched on the label \rmth{\ell}, so splitting would be
+redundant. In this case, \rmth{\Downarrow_{pc}^A} simply selects the
+positive branch to apply and continues without splitting. The
+symmetric case occurs in \textsc{App-Facet-Neg}. Facet formation
+follows this pattern, accounting for the relation of \rmth{\ell} to
+\rmth{pc}.
 
-The rule \text{Box}, \textsc{Unbox}, and \textsc{Set} are similar to
-the standard implementation of boxes, but with a slight twist: box
-creation, reads, and writes may occur within a privilaged context. To
-understand why, consider the following example\footnote{Our formal
-  semantics elides \code{if}, though it may be obtained via a Church
-  encoding if desired as in Austin et al.\cite{Austin:12}. Our
-  implementation includes \code{if} but not other constructs such as
-  \code{cond}}:
+The rules \textsc{Box}, \textsc{Unbox}, and \textsc{Set} appear
+similar to the standard implementation of boxes, but employ several
+meta-functions to do their work. This is because box creation, reads,
+and writes may occur within a privilaged context, and care must be
+taken to form facets when \rmth{pc} is nonempty. To understand why,
+consider the following example\footnote{Our formal semantics elides
+  \code{if}, though it may be obtained via a Church encoding if
+  desired as in Austin et al.\cite{Austin:12}. Our implementation
+  includes \code{if} but not other constructs such as \code{cond}}:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=boxexample]
 (define x (box 0))
@@ -637,11 +641,29 @@ the \code{if} is taken), and along the subsequent negative branch
 
 Label creation allocates a label as a fresh address in the store,
 binding the specified label predicate and adding it to the
-environment. Observation evaluates the label expression to an address
-and executes the associated predicate. Once this is done, \textsc{Obs}
-uses the \rmth{\var{obs}} meta-function to select the appropriate branch
-based on the value returned by the predicate associated with the
-label.
+environment. Labels must be store-allocated rather than bound in the
+lexical environment, as the latter would allow the label to be rebound
+by anyone using the facet:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=rebindingexample]
+(define alice-label (let-label l (lambda (x) (= x alice)) l))
+(define x (fac alice-label 1 0))
+(let ([alice-label (let-label l (lambda (x) #t) l)]) |\label{lineno:alicelab}|
+  (obs alice-label 1 x)) ; Should return |\facet{\texttt{alice-label}}{1}{0}|
+\end{lstlisting}
+
+The \code{obs} form in the above example ought to return
+\facet{\code{alice-label}}{1}{0}. But if we pull labels from the
+lexical environment, the binding on line~\ref{lineno:alicelab} shadows
+the policy originally associated with the facet.
+
+Last, observation evaluates the label expression to an address and
+executes the associated predicate. Once this is done, \textsc{Obs}
+uses the \rmth{\var{obs}} meta-function to select the appropriate
+branch based on the value returned by the predicate associated with
+the label. This meta-function accounts for the fact that the label
+being observed may appear arbitrarily deep in the facet (or not at
+all).
 
 \section{Faceted Execution as Macros}
 
