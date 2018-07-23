@@ -222,26 +222,26 @@ also extends several core forms in Racket to work with faceted
 values (our implementation is detailed in Section~\ref{sec:implementation}). We
 have measured the overhead of \racets in several microbenchmarks, and
 have used \racets to implement a small server-based
-board-game (detailed in Section~\ref{sec:overview}). We see \racets as a
+board-game (detailed in Sections~\ref{sec:overview} and~\ref{sec:implementation}). We see \racets as a
 promising prototype for policy-agnostic programming in Racket, and
 conclude with discussion of future directions in Section~\ref{sec:conclusion}.
 
 \section{Overview of Faceted Execution}
 \label{sec:overview}
 
-To introduce our setting we present the implementation of Battleship,
-a small guessing-based board game, in \racets (this section presents a
+To introduce faceted execution more concretely, we present the implementation
+of Battleship, a small guessing game, in \racets (this section presents a
 distilled version of our case study in
-Section~\ref{sec:case-study}). In this game each player has a
-grid-based board on which they place tiles (or ``ships''). The players
+Section~\ref{sec:implementation}). In this game each player has a
+private board of coordinates, at which they place ``ships''. The players
 hide their boards from each other as play progresses in rounds. Each
-turn a player guesses the position of a tile on the other player's
-board. If the guess is successful that tile is removed from the
-board. Play ends once one player's board has no remaining tiles, at
-which point that player loses.
+turn a player guesses the position of a ship on the other player's
+board. If the guess is successful the tile is removed from the
+board and a hit is declared publically. Play ends once one player's board
+has no remaining tiles, at which point that player loses.
 
 We implement game boards as lists of cons cells representing the
-\blue{$(x,y)$} coordinates of ships. Board creation is simply the empty
+\blue{$(x,y)$} coordinates of ships. Board creation simply returns an empty
 list, and adding a piece is done via \lstinline|cons|:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
@@ -274,19 +274,23 @@ boards), it is written without any special machinery to maintain the
 secrecy of \code{board}. Protecting data {w.r.t.} policies is instead handled
 automatically and implicitly by a runtime monitor.
 When Alice and Bob want to play a game, they both create a
-\emph{label} to protect their data. A label is a predicate that takes
-an argument and, if it returns true, reveals a secret. Alice's label
-is used to annotate whatever data she wants to be kept
-secret. Supposing Alice chooses to be player 1, she will use the
+\emph{label} to protect their data. A label is unique id mapped to a policy predicate
+that takes an key (e.g., the current user's name) and returns true or false to indicate
+permission for the label. Alice's label is used to annotate data she wants
+to be kept secret. Supposing Alice chooses to be player 1, she may use the
 following label:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
 (define alice-label (let-label l (lambda (x) (= 1 x))) l)
 \end{lstlisting}
 
-Bob would use a similar label (but with 2 instead of 1). At runtime,
-the \code{label} form creates a label \blue{$\ell_{A}$} and returns it
-to the binding for \code{alice-label}. When Alice wants to protect a
+This code illustrates label creation, policy predicates, and the first-class
+nature of labels. The policy predicate $\texttt{($\lambda$ (\blue{x}) (= 1 \blue{x}))}$
+grants permission to player 1 only and is associated with the dynamically generated
+label l (returned and bound to \texttt{\blue{alice-label}}).
+Bob would use a similar policy (but for player $2$ instead of $1$). At runtime,
+the \code{let-label} form creates a label \blue{$\ell_{A}$} and binds
+it to a closure for its policy predicate. When Alice wants to protect a
 value, she creates a facet annotated with her label and two
 \emph{branches}. The positive (left) branch represents the value as it
 should appear to her, and the negative (right) to everyone else:
@@ -296,14 +300,21 @@ should appear to her, and the negative (right) to everyone else:
           (facet alice-label (add-pieces (makeboard) x|$_1$| y|$_1$| |$...$|) (|\bmth{\star}|)))
 \end{lstlisting}
 
-In the above example, Alice uses \blue{$\star$} (lazy failure) to
-represent that others should see nothing if they observe the data. In
-other applications, she might choose a more sensible default value to
-reveal to others. She may even want to create a \emph{nested}
-facet. For example, in a social-networking application she may want a
+In the above example, \blue{$\star$} (lazy failure) is used in the negative branch
+to ensure execution will fail if Bob tries to observe Alice's secret gameboard.
+The $\code{(obs}\ \blue{e_\ell}\ \blue{e_\text{key}}\ \blue{e_\text{fac}}\code{)}$ form takes
+a label, a key, and a facted value. Explicit observation projects a single label
+$\blue{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ to either its positive or negative facet,
+depending on whether the policy associated with $\blue{e_\ell}$ returns true for key
+$\blue{e_\text{key}}$. If Bob tries to observe Alice's board, the policy predicate
+will return false (from \texttt{(= 1 $\blue{2}$)}) and Alice's negative facet $\blue{\star}$ will result.
+
+In other applications, Alice might choose a sensible default value to
+reveal to others---she may even want to create a \emph{nested}
+facet. For example, a social-networking application might use a
 nested facet consisting of two labels for
-\blue{$\ell_{\text{Friends}}$} and \blue{$\ell_{\text{Family}}$}. She
-would present three views of her social-media profile: \bmth{p_1} to
+\blue{$\ell_{\text{Friends}}$} and \blue{$\ell_{\text{Family}}$}. A user
+could then present three views of her social-media profile: \bmth{p_1} to
 her family, containing her phone number and other contact information,
 \bmth{p_2} to her friends showing her interests, and \bmth{p_3} to
 everyone else, showing only her name and email.
@@ -319,14 +330,17 @@ everyone else, showing only her name and email.
 \end{gather*}
 \endgroup
 
-As play of the game progresses, Alice and Bob both make guesses, and a
-driver calls the function \code{mark-hit} with each of their (faceted)
-game boards. However, because Alice and Bob's game boards are both
-facets, \code{mark-hit} cannot be immediately applied, as the argument
-\code{board} is a facet. Faceted execution ``splits'' the execution of
-the function on faceted arguments, running it first on the positive
+As a game of Battleship progresses, Alice and Bob make guesses in turn, and
+driver code calls the function \code{mark-hit} with each of their respective
+(faceted) game boards to record the attack. However, because Alice and Bob's
+game boards are both faceted values, \code{mark-hit} cannot be directly applied as
+in normal execution. Instead, faceted execution ``splits'' the evaluation of
+the function application over both facets, running it first on the positive
 branch, then again on the negative branch. Finally, the results of
-each branch are merged to produce a facet.
+each branch are combined again to produce a new faceted value. This allows FE
+to avoid needing to reason about labels and policies until an explicit observation
+point where a policy is checked and a faceted value is projected to one of its
+facets.
 
 %% \begin{center}
 %%   \begin{tikzpicture}
@@ -342,13 +356,21 @@ each branch are merged to produce a facet.
 %% \end{center}
 
 Because the applied function can be stateful, faceted execution also
-records the current privilege level in a \emph{program counter}. The
-program counter is used to build facets when writes are made to the
-store inside of a privileged context. We expand upon these subtleties
-in Section~\ref{sec:semantics}, where we present a full semantics for
-faceted execution.
+maintains the current privilege level in a \emph{program counter} (PC). The
+program counter is a property of the current evaluation context and is used
+to build facets when writes are made to the store in a privileged context.
+For example, if a stateful function ``splits'' when applied on both the positive and negative
+facets of a value faceted by a label $\blue{\ell}$, and on the positive branch
+the function uses $\texttt{set!}$ to mutate a variable $x$ from $2$ to $3$,
+FE semantics will set $x$ to $\facet{\ell}{3}{2}$ so that the value $3$
+cannot be leaked from the secure context (speculative execution under the
+$\blue{+\ell}$ facet). This is because, for the duration of the the app ``split'',
+the evaluation context records that all values are implicitly guarded by $\blue{+\ell}$
+and then $\blue{-\ell}$, respectively. If the semantics for $\texttt{set!}$ does
+not make this faceting explicit, a senstive value could leak from one PC to another.
+We expand upon these subtleties in Section~\ref{sec:semantics},
+where we present a complete semantics for faceted execution.
 
-\kris{Stuff about obs here..}
 
 \section{A Formal Semantics for Faceted Execution}
 \label{sec:semantics}
@@ -356,14 +378,14 @@ faceted execution.
 \begin{figure}
 \begin{displaymath}
   \begin{array}{lcrcl}
-    \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{() \mid \code{true} \mid \code{false} \mid \ldots} \\
-    \blue{x} & \blue{\in} & \blue{var} & \blue{::=} & \blue{\ldots}  \\
+    \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{'() \mid \code{true} \mid \code{false} \mid \ldots} \\
+    \blue{x} & \blue{\in} & \blue{var} & \blue{::=} & \langle\textit{program variables}\rangle  \\
     \blue{e} & \blue{\in} & \blue{exp} & \blue{::=} & \blue{c} \mid \blue{x} \\
     & & & \blue{\mid} & \blue{(\lambda ~ (x) ~ e) \mid (e ~ e)} \\
     & & & \blue{\mid} & \blue{(\code{box} ~ e) \mid (\code{unbox} ~ e) \mid (\code{set!} ~ e ~ e)} \\
-    & & & \fcol{\mid} & \fcol{(\code{let-label} ~ \ell ~ e ~ e)} \\
-    & & & \fcol{\mid} & \fcol{(\code{facet} ~ e ~ e ~ e)} \\
-    & & & \fcol{\mid} & \fcol{(\code{obs} ~ e ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{let-label} ~ x ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{facet} ~ e ~ e ~ e)} \\
+    & & & \blue{\mid} & \blue{(\code{obs} ~ e ~ e ~ e)} \\
   \end{array}
 \end{displaymath}
 \label{fig:syntax}
