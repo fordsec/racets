@@ -620,9 +620,9 @@ the \code{if} is taken), and along the subsequent negative branch
       %\end{displaymath}
       \begin{displaymath}
         \begin{array}{rclrr}
-          {\formfacet{\varnothing}{v_1}{v_2}} & {=} & {v_1} \\
-          {\formfacet{\{+\ell\} \cup rest}{v_1}{v_2}} & {=} & {\facet{\ell}{\formfacet{rest}{v_1}{v_2}}{v_2}} \\
-          {\formfacet{\{-\ell\} \cup rest}{v_1}{v_2}} & {=} & {\facet{\ell}{v_2}{\formfacet{rest}{v_1}{v_2}}}
+          {\formfacet{\varnothing}{v^+}{v^d}} & {=} & {v^+} \\
+          {\formfacet{\{+\ell\} \cup rest}{v^+}{v^d}} & {=} & {\facet{\ell}{\formfacet{rest}{v^+}{v^d}}{v^d}} \\
+          {\formfacet{\{-\ell\} \cup rest}{v^+}{v^d}} & {=} & {\facet{\ell}{v^d}{\formfacet{rest}{v^+}{v^d}}}
         \end{array}
       \end{displaymath}
       \\
@@ -670,7 +670,8 @@ uses the \rmth{\var{obs}} meta-function to select the appropriate
 branch based on the value returned by the predicate associated with
 the label. This meta-function accounts for the fact that the label
 being observed may appear arbitrarily deep in the facet (or not at
-all).
+all). \zw{We elide the description of the meta-function \rmth{\var{obs}}
+here, but it is fully described in Austin et al.~\cite{Austin:2012}}
 
 \section{Faceted Execution as Macros}
 
@@ -891,7 +892,11 @@ Racets defines a \code{box} macro, along with \code{unbox} and
 Figure~\ref{fig:setbang}, which inlines the definition of the
 \textit{write} metafunction from Section~\ref{sec:semantics} to
 consider the case under which a facet is used when an address is
-expected.
+expected. \zw{The role of the \textit{write} metafunction is to 
+recursively dig into faceted value, and make writes to the addresses.
+If it is an address at the beginning, which hits the base case,
+the \textit{write} metafunction constructs a new faceted value according
+to \bmth{pc} and makes modification to the address.}
 
 Facet observation is handled similarly, first evaluating the label to
 produce a policy predicate, followed by evaluating the policy's
