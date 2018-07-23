@@ -1,6 +1,6 @@
 \lstdefinelanguage{Racket}{
-  morekeywords=[1]{define,if,let,let*,and,car,cdr,cons,letrec,first,\#\%app, struct},
-  morekeywords=[2]{\#t,\#f,null?,true,obs},
+  morekeywords=[1]{define,if,cond,let,let*,and,car,cdr,cons,letrec,first,\#\%app, struct},
+  morekeywords=[2]{\#t,\#f,null?,true,obs,boolean?,not},
   morekeywords=[3]{label, facet, let-label, box, unbox, set!, fac},
   alsodigit=!\$\%&*+-./:<=>?@^_~,
   numbers=left,
@@ -16,5 +16,5 @@
   upquote=true,
   breaklines=true,
   breakatwhitespace=true,
-  frame = none,   literate={lambda}{{$\lambda$}}1{langle}{{$\langle$}}1{rangle}{{$\rangle$}}1{dia}{{$\diamond$}}1{star}{{$\star$}}1{qmark}{{$?$}}1{col}{{$:$}}1{ell}{{$\ell$}}1{''}{{\textquotedbl}}1
+  frame = none,   literate={bool}{{boolean?}}1{ppapp}{{\#\%app}}1{true}{{\#t}}1{false}{{\#f}}1{lambda}{{$\lambda$}}1{langle}{{$\langle$}}1{rangle}{{$\rangle$}}1{dia}{{$\diamond$}}1{star}{{$\star$}}1{qmark}{{$?$}}1{col}{{$:$}}1{ell}{{$\ell$}}1{''}{{\textquotedbl}}1
 }
