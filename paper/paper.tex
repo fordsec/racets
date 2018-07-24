@@ -128,16 +128,16 @@ computes on that data.
 
 To date, implementations of faceted execution are relatively
 heavyweight: requiring either changing the language runtime or the
-application code (e.g., by using monads). In this paper, we present
-\racets: an extension of Racket to faceted execution a library of
-macros. Given Racket's highly-expressive macro system, our
-implementation follows relatively directly from the semantics of
-faceted execution. To demonstrate how \racets can be used for
-policy-agnostic programming, we use it to build a web-based game of
-Battleship. Our implementation sheds light on several interesting
-issues in interacting with code written without faceted execution. Our
-\racets implementation is open source, under development, and
-available online.
+application code (e.g., by using monads). Following Racket's
+languages-as-libraries approach, we present Racets: an implementation
+of faceted execution as a library of macros.  Given Racket's
+highly-expressive macro system, our implementation follows relatively
+directly from the semantics of faceted execution. To demonstrate how
+\racets can be used for policy-agnostic programming, we use it to
+build a web-based game of Battleship. Our implementation sheds light
+on several interesting issues in interacting with code written without
+faceted execution. Our \racets implementation is open source, under
+development, and available online.
 \end{abstract}
 
 %% \begin{CCSXML}
@@ -229,7 +229,7 @@ with how privacy policies are enforced. Unfortunately, the
 relatively foundational linguistic changes required to enable faceted
 execution have hindered implementations thusfar. Dynamic generation
 of first-class security labels, tracking an arbitrary number of
-facets per value, and keeping facted-value trees in a canonical order,
+facets per value, and keeping faceted-value trees in a canonical order,
 are all central challenges in any practical implementation. For example, the
 first implementation of FE (by \citet{Austin:2012}) extended
 a JavaScript interpreter to account for faceted values. Other
@@ -237,19 +237,20 @@ implementations use monads~\cite{Schmitz:2016}
 or rely upon third-party macro systems~\cite{Yang:2016}. We
 know of no existing implementation of FE that aims to interoperate seamlessly
 with code written in the host language. By contrast, Scheme boasts a powerful
-hygenic macro system that allows essentially any linguistic form
+hygienic macro system that allows essentially any linguistic form
 to be modified arbitrarily.
 
 In this paper we present \racets, an implementation of policy-agnostic
 programming in Racket via macros. \racets provides facilities for
-creating policies and faceting secure data with those policies. \racets
-also extends several core forms in Racket to work with faceted
-values (our implementation is detailed in Section~\ref{sec:implementation}). We
-have measured the overhead of \racets in several microbenchmarks, and
-have used \racets to implement a small server-based
-board-game (detailed in Sections~\ref{sec:overview} and~\ref{sec:implementation}). We see \racets as a
-promising prototype for policy-agnostic programming in Racket, and
-conclude with discussion of future directions in Section~\ref{sec:conclusion}.
+creating policies and faceting secure data with those
+policies. \racets also extends several core forms in Racket to work
+with faceted values (our implementation is detailed in
+Section~\ref{sec:implementation}). We have used \racets to implement a
+small server-based board-game (detailed in Sections~\ref{sec:overview}
+and~\ref{sec:implementation}). Relevant related work is presented in
+section~\ref{sec:related}. We see \racets as a promising prototype for
+policy-agnostic programming in Racket, and conclude with discussion of
+future directions in Section~\ref{sec:conclusion}.
 
 \section{Overview of Faceted Execution}
 \label{sec:overview}
@@ -262,7 +263,7 @@ private board of coordinates, at which they place ``ships''. The players
 hide their boards from each other as play progresses in rounds. Each
 turn a player guesses the position of a ship on the other player's
 board. If the guess is successful the tile is removed from the
-board and a hit is declared publically. Play ends once one player's board
+board and a hit is declared publicly. Play ends once one player's board
 has no remaining tiles, at which point that player loses.
 
 We implement game boards as lists of cons cells representing the
@@ -328,7 +329,7 @@ should appear to her, and the negative (right) to everyone else:
 In the above example, \blue{$\star$} (lazy failure) is used in the negative branch
 to ensure execution will fail if Bob tries to observe Alice's secret gameboard.
 The $\code{(obs}\ \blue{e_\ell}\ \blue{e_\text{key}}\ \blue{e_\text{fac}}\code{)}$ form takes
-a label, a key, and a facted value. Explicit observation projects a single label
+a label, a key, and a faceted value. Explicit observation projects a single label
 $\blue{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ to either its positive or negative facet,
 depending on whether the policy associated with $\blue{e_\ell}$ returns true for key
 $\blue{e_\text{key}}$. If Bob tries to observe Alice's board, the policy predicate
@@ -381,7 +382,7 @@ facets.
 %% \end{center}
 
 Because the applied function can be stateful, faceted execution also
-vmaintains the current privilege level in a \emph{program counter} (PC). The
+maintains the current privilege level in a \emph{program counter} (PC). The
 program counter is a property of the current evaluation context and is used
 to build facets when writes are made to the store in a privileged context.
 For example, if a stateful function ``splits'' when applied on both the positive and negative
@@ -392,7 +393,7 @@ cannot be leaked from the secure context (speculative execution under the
 $\blue{+\ell}$ facet). This is because, for the duration of the the app ``split'',
 the evaluation context records that all values are implicitly guarded by $\blue{+\ell}$
 and then $\blue{-\ell}$, respectively. If the semantics for $\texttt{set!}$ does
-not make this faceting explicit, a senstive value could leak from one PC to another.
+not make this faceting explicit, a sensitive value could leak from one PC to another.
 We expand upon these subtleties in Section~\ref{sec:semantics},
 where we present a complete semantics for faceted execution.
 
@@ -660,7 +661,7 @@ follows this pattern, accounting for the relation of \rmth{\ell} to
 The rules \textsc{Box}, \textsc{Unbox}, and \textsc{Set} appear
 similar to the standard implementation of boxes, but employ several
 meta-functions to do their work. This is because box creation, reads,
-and writes may occur within a privilaged context, and care must be
+and writes may occur within a privileged context, and care must be
 taken to form facets when \rmth{pc} is nonempty. To understand why,
 consider the following example\footnote{Our formal semantics elides
   \code{if}, though it may be obtained via a Church encoding if
@@ -812,7 +813,7 @@ macro-expand) could also be used. \racets defines the parameter
 
 Facet creation appears as three separate rules in
 Figure~\ref{fig:semantics}, which we recapitulate here in three
-distint colors for each case:
+distinct colors for each case:
 
 \[\small
 \begin{array}{ccc}
@@ -1296,7 +1297,7 @@ between \racets and Racket, and we have implemented a faceted, web-based game of
 to explore this idea. We suspect that a more thorough investigation of likely idioms
 for faceted, non-faceted module interaction is needed and that purely functional code
 plays a special role as a degenerate case where arbitrary non-faceted code may be lifted
-to operate over facted values without potential unsoundness. In the future, we plan to explore
+to operate over faceted values without potential unsoundness. In the future, we plan to explore
 these design choices in a more principled way and also to scale a static analysis of faceted
 execution to fully expanded Racket so it may be applied directly to \racets.
 
