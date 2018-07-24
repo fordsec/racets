@@ -136,7 +136,7 @@
           [ans (makep2strike x y)])
      (http-response 
       (if ans
-           "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
+           "<h1>Congratulations!</h1> <h4>You hit player 1!</h4>"
           "<p>No hit :(</p>")))))
 
 ; Pretty-print a game board
@@ -151,7 +151,7 @@
                                 (begin
                                   (append (if (has-piece board rownum cellnum)
                                               "<td>&#x1F6A2;</td>"
-                                              "<td>.</td>"))
+                                              "<td>&#x1F30A;</td>"))
                                   (per-row-h rownum (+ cellnum 1)))))]
                [per-row (lambda (rownum)
                           (begin
