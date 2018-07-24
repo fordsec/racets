@@ -961,7 +961,7 @@ builtin functions such as \code{display}, we need to be mindful of the
 fact that these functions cannot work with faceted arguments.
 
 To handle this, we implement a macro for the \code{lambda} form, to
-tag Racet closures specifically (so that they are differentiated from
+tag \racets closures specifically (so that they are differentiated from
 functions outside of the current module). In the case that a foreign
 function is applied to a faceted value, our implementation of function
 application wraps the function to be able to handle facets by
