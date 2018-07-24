@@ -790,7 +790,6 @@ Facet creation appears as three separate rules in
 Figure~\ref{fig:semantics}, which we recapitulate here in three
 distint colors for each case:
 
-\kris{TODO: FIX THIS (make consistent w semantics)}
 \[\small
 \begin{array}{ccc}
   {\color{brown}
@@ -811,12 +810,10 @@ distint colors for each case:
     \inferrule[\textsc{Fac-Create-Split}]
               {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
                 \boxed{\{+\ell, -\ell\} \cap pc = \varnothing} \\\\
-                e_2, \rho, \sigma' \Downarrow_{pc \cup \{+l\}}^E \sigma'', v_1 \\\\
-                e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-l\}}^E \sigma''', v_2 \and
+                e_2, \rho, \sigma' \Downarrow_{pc \cup \{+\ell\}}^E \sigma'', v_1 \\\\
+                e_3, \rho, \sigma'' \Downarrow_{pc \cup \{-\ell\}}^E \sigma''', v_2 \and
                 v = \formfacet{pc}{v_1}{v_2}}
               {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
-
-
 \end{array}
 \]
 
