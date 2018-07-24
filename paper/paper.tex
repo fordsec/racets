@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usetikzlibrary{cd}
 \usepackage{xcolor}
+\usepackage[labelsep=quad,indention=10pt]{subfig}
 \usepackage{mathpartir} % Inference rules
 \usepackage[ruled]{algorithm2e} % For algorithms
 \usepackage{setspace}
@@ -960,7 +961,7 @@ builtin functions such as \code{display}, we need to be mindful of the
 fact that these functions cannot work with faceted arguments.
 
 To handle this, we implement a macro for the \code{lambda} form, to
-tag Racet closures specifically (so that they are differentiated from
+tag \racets closures specifically (so that they are differentiated from
 functions outside of the current module). In the case that a foreign
 function is applied to a faceted value, our implementation of function
 application wraps the function to be able to handle facets by
@@ -990,10 +991,223 @@ general remains (to our knowledge) an open problem.
 
 Because of Racket's flexible macro system, our implementation of
 faceted execution is much smaller than other systems: our core macros
-comprise only 170 source lines of Racket, with another 120 lines of
-library code to perform various facet-related functions. 
+comprise roughly 170 source lines of Racket, with another 120 lines of
+library code to perform various facet-related functions.
 
-We plan to make our prototype of \racets available publicly.
+Our implementation is currently available on Github at
+\blue{\url{https://github.com/fordsec/racets}}
+
+\paragraph*{Case Study: Battleship in Racets}
+
+\begin{figure*}
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{a.png}%
+    \label{fig:player1}%
+  } 
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{b.png}%
+    \label{fig:player1player2}%
+  }
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=.7in]{c.png}%
+    \label{fig:player2strike}%
+  }
+  \vspace{.3in}
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{d.png}%
+    \label{fig:player1afterstrike}%
+  }
+  \caption{Screenshots from our Battleship case study.}
+  \label{fig:case}
+\end{figure*}
+
+To gain perspective on how Racets enables policy-agnostic programming,
+we scaled our implementation from Section~\ref{sec:overview} to a
+web-based game of Battleship written in Racets. Our implementation
+uses Racket's \texttt{web-server} framework~\cite{webserver}, which
+defines an API for writing HTTP-based server applications. 
+
+Figure~\ref{fig:case} shows several screenshots of our Battleship
+application. The first screenshot~\ref{fig:player1} shows the board as
+viewed by player 1 (note the parameter \texttt{/player1/player1}),
+while the second shows the empty board observed when player 2 attempts
+to view player 1's board. The screenshot in~\ref{fig:player2strike}
+shows the response seen by player 2 upon a successful hit. Finally
+screenshot~\ref{fig:player1afterstrike} shows player one's board with
+the ship on \bmth{(2,3)} removed.
+
+When running, our game server provides several routes that a user can
+access:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define-values (dispatch generate-url)
+  (dispatch-rules
+    [("player1" (string-arg)) player1board]
+    [("player2" (string-arg)) player2board]
+    [("player1strike" (string-arg)) p1strike]
+    [("player2strike" (string-arg)) p2strike]))
+\end{lstlisting}
+
+The route \texttt{/player1/<id>} (or \texttt{/player2/<id>}) renders
+player 1's game board when viewed as \texttt{<id>}. We facet game
+boards with policies that reveal player 1's board when \texttt{<id>}
+is \texttt{player1}, and do the same with player 2:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define p1l (mkpol "player1"))
+(define p1board
+  (box (fac p1l
+            (add-pieces (makeboard) '(1 2 ldots))
+            (makeboard))))
+\end{lstlisting}
+
+The board is explicitly made into a box: this is because the board's
+state will change as player 2 makes moves and eliminates pieces from
+their board. The \code{player1board} function implements the logic to
+render player 1's board as an HTML table. The argument \code{viewer}
+corresponds to the \texttt{<id>} route argument, and is passed to
+\code{player1board} by the framework. This argument is then used to
+observe the board game
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define player1board
+  (ext-lambda (request viewer)
+         (http-response "<h1>Player 1's Game Board</h1>"
+                        (pretty-print 
+                           (obs p1l name (deref p1board))))))
+\end{lstlisting}
+
+The implementation of \code{player1board} uses a special form
+\code{ext-lambda}, discussed at the end of this section, to allow code
+from Racets to be executed by the framework (which is not prepared to
+execute faceted code).
+
+The function \code{p1strike} allows player 1 to make a guess as to the
+position of ships on player 2's board. The function parses the
+position into two coordinates and then calls \code{mark-hit} to
+perform the hit, updating player 2's board and then observing the
+result to answer (to player 1) whether the result was a hit or not:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define p1strike
+  (ext-lambda
+   (request position)
+   (let* ([x (char-to-num (string-ref position 0))]
+          [y (char-to-num (string-ref position 2))]
+          [ans (mark-hit p2board x y)]
+      (set! p2board (car ans))
+      (http-response
+       (if (cdr (obs p2l "player2" ans)) |label{lineno:explicitobs}|
+           "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
+           "<p>No hit :(</p>")))))))
+\end{lstlisting}
+
+Note that we need to use an explicit \code{obs} form on
+line~\ref{lineno:explicitobs}. This is because---as \code{p2board} is
+a facet---the result will also be a faceted value. When we want to
+display the output to player 1, our code needs to explicitly observe
+the answer, as \code{http-response} cannot accept a faceted value.
+
+\paragraph*{}
+
+\section{Related Work and Future Directions}
+
+To the best of our knowledge, we are the first authors to present an
+implementation of faceted execution using hygienic macros. There are
+several threads of related work in dynamic information flow and
+programming paradigms for information flow.
+
+Information-flow was first formalized by \citet{Denning:1976}.
+In her seminal work on a lattice model
+for information flow, she outlined challenges and potential solutions
+to static information-flow checking. Subsequently, \citet{Goguen:82}
+defined noninterference, which formalized the idea that privileged
+data should not influence publicly observable
+outputs. \citet{Clarkson:08} later recognized that
+information-flow properties fit into a class of program properties
+that could not be characterized by a single trace of a program, but
+rather a set of traces, and called these hyperproperties.
+
+Along with definitions of information flow, there has also been
+significant interest in mechanisms for enforcing information
+flow. This work can be broadly divided into static and dynamic
+enforcement mechanisms for information flow security. Of the
+mechanisms for static information flow, security type systems have
+gained the most use. First introduced by \citet{Volpano:1997}, these
+type systems augment the binding environment to track the privilege of
+variables and prevent writes to variables that would violate
+noninterference. Myers leveraged this idea to produce Jif, a variant
+of Java with an information-flow type
+system~\cite{Myers:1999}. Security type systems have been subsequently
+extended to accommodate concurrent programs~\cite{Zdancewic:03} and
+flow sensitivity~\cite{Hunt:2006}. Faceted execution does not require
+annotating the program with security types, but at the expense of
+losing a static characterization of the program's security in its type
+system.
+
+\citet{Devriese:10} first introduced secure multi-execution as a
+dynamic enforcement technique for information flow. Secure
+multi-execution runs $2^k$ copies of a program in parallel, where each
+run represents a subset of $\wp(\var{Prin})$, where $\var{Prin}$ is a
+set of principals. For example, if the principals in the program are
+Alice and Bob, secure multi-execution executes four copies of the
+program: one that replaces all secret inputs by $\bot$, one that
+replaces Bob's input by $\bot$ but Alice's input by the true input,
+one for Bob's input, and one with access to all privilaged
+information. When external effects are made (e.g., writing to disc),
+the runtime can select which variant to use based on a policy. Secure
+multi-execution prevents information flow violations at runtime by
+ensuring that observations which violate the information-flow policy
+receive a view of the data computed without access to the secret
+inputs. Secure multi-execution has been extended in a variety of ways,
+e.g., scaling to its implementation in web browsers~\cite{Bielova:11},
+adding declassification in a granular way~\cite{Rafnsson:13}, and even
+preventing side-channel attacks~\cite{Kashyap:11}.
+
+As the number of principals increases, secure multi-execution's
+overhead increases exponentially, unnecessarily duplicating work not
+influenced by secret inputs. Austin et al. introduced faceted
+execution as an optimization of secure multi-execution
+in~\cite{Austin:2012}. Instead of treating the whole program as a
+potentially-secret computation, faceted execution realizes that
+influence can be tracked and propagated in a granular way using
+facets. Notably, Austin et al.'s work does not include first-class
+labels, as it was simulating secure multi-execution, where the
+principals could not be dynamically generated.
+
+At the same time, Yang et al. first implemented Jeeves, a language
+allowing policy-agnostic programming~\cite{Yang:2012}. Policy-agnostic
+programming takes the view that programs should be written without
+regard to a particular privacy policy, because as the policy changes,
+correctly updating program logic is cumbersome and
+error-prone. Policy-agnostic programming was first implemented in the
+domain-specific language Jeeves, using an SMT solver to decide which
+view of secret data to reveal based on a policy. Later, both authors
+collaborated to implement Jeeves using faceted
+execution.~\cite{Austin:2013}. This formulation includes first-class
+labels, and is the basis for our concrete semantics.
+
+Several other efforts into dynamic analysis for information flow are
+worth noting. \citet{Stefan:2011} first presented \code{LIO}---a monad
+(with implementation in Haskell) that tracks privilege of the current
+program counter and forbids effects that would violate the security
+policy. It might be surprising that \code{LIO}
+works well for Haskell programs, given that faceted execution is
+more precise than \code{LIO}---allowing values to become faceted
+rather than halting the program. One key difference is that Haskell
+programs emphasize purity while languages such as
+JavaScript (the original target of faceted execution) does not, so much
+of the machinery for faceted execution's effect on the store is less
+interesting. Several authors have implemented related systems to
+\code{LIO}, including variants of faceted execution \cite{Schmitz:2016}
+and variants of \code{LIO} that extend its
+power to arbitrary monad transformers~\cite{james}. We believe that it
+would be possible to implement a variant of our technique that would
+give similar insights to programs using \code{LIO}, though much of the
+interesting machinery for handling state may be unnecessary.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
