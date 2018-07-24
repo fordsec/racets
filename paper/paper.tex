@@ -335,12 +335,12 @@ with $\blue{e_\ell}$ returns true for key $\blue{e_\text{key}}$. If Bob tries to
 Alice's board, the policy predicate will return false (from \texttt{(= 1 $\blue{2}$)}) 
 and Alice's negative facet $\blue{\star}$ will result.
 
-In other applications, Alice might choose a sensible default value to
+In other applications, Alice may choose a sensible default value to
 reveal to others---she may even want to create a \emph{nested}
-facet. For example, a social-networking application might use a
+facet. For example, a social-networking application may use a
 nested facet consisting of two labels for
 \blue{$\ell_{\text{Friends}}$} and \blue{$\ell_{\text{Family}}$}. A user
-could then present three views of her social-media profile: \bmth{p_1} to
+can then present three views of her social-media profile: \bmth{p_1} to
 her family, containing her phone number and other contact information,
 \bmth{p_2} to her friends showing her interests, and \bmth{p_3} to
 everyone else, showing only her name and email.
@@ -390,10 +390,10 @@ facets of a value faceted by a label $\blue{\ell}$, and on the positive branch
 the function uses $\texttt{set!}$ to mutate a variable $x$ from $2$ to $3$,
 FE semantics will set $x$ to $\facet{\ell}{3}{2}$ so that the value $3$
 cannot be leaked from the secure context (speculative execution under the
-$\blue{+\ell}$ facet). This is because, for the duration of the the app ``split'',
+$\blue{+\ell}$ facet). This is because, for the duration of the app ``split'',
 the evaluation context records that all values are implicitly guarded by $\blue{+\ell}$
 and then $\blue{-\ell}$, respectively. If the semantics for $\texttt{set!}$ does
-not make this faceting explicit, a sensitive value could leak from one PC to another.
+not make this faceting explicit, a sensitive value can leak from one PC to another.
 We expand upon these subtleties in Section~\ref{sec:semantics},
 where we present a complete semantics for faceted execution.
 
@@ -797,7 +797,7 @@ Similarly, program counters are sets of branches. However, we must
 still ask how we will keep track of the ``current'' program
 counter. Our implementation uses Racket's parameters, though other
 mechanisms (such as continuation marks\kris{cite}, to which parameters
-macro-expand) could also be used. \racets defines the parameter
+macro-expand) can also be used. \racets defines the parameter
 \code{current-pc}, and updates it as computation progresses:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=racets]
@@ -1143,7 +1143,7 @@ the answer, as \code{http-response} cannot accept a faceted value.
 
 \paragraph*{Module Interactions in \racets}
 
-There is a wealth of existing Racket code we might like to incorporate
+There is a wealth of existing Racket code we may like to incorporate
 into \racets programs. For example, our case study uses the
 \texttt{web-server} framework for building web applications. However,
 in general, we believe that interacting with code not written using
@@ -1252,7 +1252,7 @@ Several other efforts into dynamic analysis for information flow are
 worth noting. \citet{Stefan:2011} first presented \code{LIO}---a monad
 (with implementation in Haskell) that tracks privilege of the current
 program counter and forbids effects that would violate the security
-policy. It might be surprising that \code{LIO}
+policy. It may be surprising that \code{LIO}
 works well for Haskell programs, given that faceted execution is
 more precise than \code{LIO}---allowing values to become faceted
 rather than halting the program. One key difference is that Haskell
