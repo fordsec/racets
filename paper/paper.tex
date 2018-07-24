@@ -314,7 +314,7 @@ nature of labels. The policy predicate $\texttt{($\lambda$ (\blue{x}) (= 1 \blue
 grants permission to player 1 only and is associated with the dynamically generated
 label l (returned and bound to \texttt{\blue{alice-label}}).
 Bob would use a similar policy (but for player $2$ instead of $1$). At runtime,
-the \code{let-label} form creates a label \blue{$\ell_{A}$} and binds
+the \code{let-label} form creates a label \fcol{$\ell_{A}$} and binds
 it to a closure for its policy predicate. When Alice wants to protect a
 value, she creates a facet annotated with her label and two
 \emph{branches}. The positive (left) branch represents the value as it
@@ -327,11 +327,11 @@ should appear to her, and the negative (right) to everyone else:
 
 In the above example, \blue{$\star$} (lazy failure) is used in the negative branch
 to ensure execution will fail if Bob tries to observe Alice's secret gameboard. To observe
-Alice's gameboard, Bob can try to use $\code{(obs}\ \blue{e_\ell}\ \blue{e_\text{key}}\ 
+Alice's gameboard, Bob can try to use $\code{(obs}\ \fcol{e_\ell}\ \blue{e_\text{key}}\ 
 \blue{e_\text{fac}}\code{)}$ form, which takes a label, a key, and a faceted value.
-Explicit observation projects a single label $\blue{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ 
+Explicit observation projects a single label $\fcol{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ 
 to either its positive or negative facet, depending on whether the policy associated 
-with $\blue{e_\ell}$ returns true for key $\blue{e_\text{key}}$. If Bob tries to observe 
+with $\fcol{e_\ell}$ returns true for key $\blue{e_\text{key}}$. If Bob tries to observe 
 Alice's board, the policy predicate will return false (from \texttt{(= 1 $\blue{2}$)}) 
 and Alice's negative facet $\blue{\star}$ will result.
 
@@ -339,7 +339,7 @@ In other applications, Alice may choose a sensible default value to
 reveal to others---she may even want to create a \emph{nested}
 facet. For example, a social-networking application may use a
 nested facet consisting of two labels for
-\blue{$\ell_{\text{Friends}}$} and \blue{$\ell_{\text{Family}}$}. A user
+\rmth{\ell_{\text{Friends}}} and \rmth{\ell_{\text{Family}}}. A user
 can then present three views of her social-media profile: \bmth{p_1} to
 her family, containing her phone number and other contact information,
 \bmth{p_2} to her friends showing her interests, and \bmth{p_3} to
@@ -386,13 +386,13 @@ maintains the current privilege level in a \emph{program counter} (PC). The
 program counter is a property of the current evaluation context and is used
 to build facets when writes are made to the store in a privileged context.
 For example, if a stateful function ``splits'' when applied on both the positive and negative
-facets of a value faceted by a label $\blue{\ell}$, and on the positive branch
+facets of a value faceted by a label $\fcol{\ell}$, and on the positive branch
 the function uses $\texttt{set!}$ to mutate a variable $x$ from $2$ to $3$,
 FE semantics will set $x$ to $\facet{\ell}{3}{2}$ so that the value $3$
 cannot be leaked from the secure context (speculative execution under the
-$\blue{+\ell}$ facet). This is because, for the duration of the app ``split'',
-the evaluation context records that all values are implicitly guarded by $\blue{+\ell}$
-and then $\blue{-\ell}$, respectively. If the semantics for $\texttt{set!}$ does
+\rmth{+\ell} facet). This is because, for the duration of the app ``split'',
+the evaluation context records that all values are implicitly guarded by \rmth{+\ell}
+and then \rmth{-\ell}, respectively. If the semantics for $\texttt{set!}$ does
 not make this faceting explicit, a sensitive value can leak from one PC to another.
 We expand upon these subtleties in Section~\ref{sec:semantics},
 where we present a complete semantics for faceted execution.
@@ -622,7 +622,7 @@ of faceted values. We use the term \emph{branches} to refer to
 positive or negated labels. Collections of branches define the program
 counter \rmth{pc}, which tracks the set of branches in the current
 context. For example, to apply a faceted function to a value (as in
-the application of \bmth{\facet{\ell}{\lambda x.~0}{\lambda x.~1}}),
+the application of $\facet{\ell}{\blue{\lambda x.~0}}{\blue{\lambda x.~1}}$),
 the semantics first applies \bmth{\lambda x.~0} while extending \rmth{pc}
 with \rmth{+\ell}, then applies the negative branch extending
 \rmth{pc} with \rmth{-\ell}.
