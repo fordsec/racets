@@ -301,8 +301,8 @@ secrecy of \code{board}. Protecting data {w.r.t.} policies is instead handled
 automatically and implicitly by a runtime monitor.
 When Alice and Bob want to play a game, they both create a
 \emph{label} to protect their data. A label is unique id mapped to a policy predicate
-that takes an key (e.g., the current user's name) and returns true or false to indicate
-permission for the label. Alice's label is used to annotate data she wants
+that takes a key (e.g., the current user's name) and returns true or false to indicate
+permission for the label. Alice's label is used to annotate the data she wants
 to be kept secret. Supposing Alice chooses to be player 1, she may use the
 following label:
 
@@ -327,13 +327,14 @@ should appear to her, and the negative (right) to everyone else:
 \end{lstlisting}
 
 In the above example, \blue{$\star$} (lazy failure) is used in the negative branch
-to ensure execution will fail if Bob tries to observe Alice's secret gameboard.
-The $\code{(obs}\ \blue{e_\ell}\ \blue{e_\text{key}}\ \blue{e_\text{fac}}\code{)}$ form takes
-a label, a key, and a faceted value. Explicit observation projects a single label
-$\blue{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ to either its positive or negative facet,
-depending on whether the policy associated with $\blue{e_\ell}$ returns true for key
-$\blue{e_\text{key}}$. If Bob tries to observe Alice's board, the policy predicate
-will return false (from \texttt{(= 1 $\blue{2}$)}) and Alice's negative facet $\blue{\star}$ will result.
+to ensure execution will fail if Bob tries to observe Alice's secret gameboard. To observe
+Alice's gameboard, Bob can try to use $\code{(obs}\ \blue{e_\ell}\ \blue{e_\text{key}}\ 
+\blue{e_\text{fac}}\code{)}$ form, which takes a label, a key, and a faceted value.
+Explicit observation projects a single label $\blue{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ 
+to either its positive or negative facet, depending on whether the policy associated 
+with $\blue{e_\ell}$ returns true for key $\blue{e_\text{key}}$. If Bob tries to observe 
+Alice's board, the policy predicate will return false (from \texttt{(= 1 $\blue{2}$)}) 
+and Alice's negative facet $\blue{\star}$ will result.
 
 In other applications, Alice might choose a sensible default value to
 reveal to others---she may even want to create a \emph{nested}
