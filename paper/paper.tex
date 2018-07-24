@@ -1153,7 +1153,9 @@ wide array of design choices to handle these module interactions
 including security type systems and blame (to track which module
 violated the privacy policy).
 
-\section{Related Work and Future Directions}
+
+\section{Related Work}
+\label{sec:related}
 
 To the best of our knowledge, we are the first authors to present an
 implementation of faceted execution using hygienic macros. There are
@@ -1261,10 +1263,10 @@ a faceted semantics directly. We call our prototype system \racets: Racket with 
 
 The advantage of this approach is that faceted, policy-agnostic, programs may be written
 directly in Racket, making use of the wealth of Racket code already available.
-A central challenge of this then, is how to ensure there is a sound and practical inter-operation
-between racets and standard Racket (or other languages written as libraries in Racket). Our
-approach to this has been to use a tagging scheme that identifies values from \racets
-so untagged values may be treated by \racets as originating from a non-\racets language.
+A central challenge of this then, is how to ensure there is a sound (w.r.t. secure multi-execution)
+and practical inter-operation between \racets and standard Racket (or other languages written as
+libraries in Racket). Our approach to this has been to use a tagging scheme that identifies values
+from \racets so untagged values may be treated by \racets as originating from a non-\racets language.
 For example, a pure Racket function that is not tagged, being applied at a $\blue{\code{ppapp}}$
 form in \racets, can be automatically lifted to support FE (so that it can split when applied
 on a faceted value).
