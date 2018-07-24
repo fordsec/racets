@@ -66,14 +66,13 @@
 }
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
-\newcommand{\colorMATH}{black!20!blue}
+\definecolor{colorMATH}{HTML}{3E5BA9}
+\definecolor{colorFAC}{HTML}{9F1D20}
 \newcommand{\colorID}{black!20!blue}
-\newcommand{\colorCOMM}{0.133,0.545,0.133}
-\newcommand{\colorFAC}{black!20!red}
-\newcommand{\blue}[1] {{\color{\colorMATH} #1}}
-\newcommand{\fcol}[1] {{\color{\colorFAC} #1}}
-\newcommand{\bmth}[1] {{\color{\colorMATH} $#1$}}
-\newcommand{\rmth}[1] {{\color{\colorFAC} $#1$}}
+\newcommand{\blue}[1] {{\color{colorMATH} #1}}
+\newcommand{\fcol}[1] {{\color{colorFAC} #1}}
+\newcommand{\bmth}[1] {{\color{colorMATH} $#1$}}
+\newcommand{\rmth}[1] {{\color{colorFAC} $#1$}}
 \newcommand{\code}[1]{\lstinline{#1}}
 
 \newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
@@ -461,7 +460,7 @@ Alice is indeed the person observing the facet:
     \begin{displaymath}
       \begin{array}{c}
         \begingroup
-        \color{\colorMATH}
+        \color{colorMATH}
         \begin{array}{cccc}
           \inferrule[\textsc{Const}]{ }
                                     {c, \rho, \sigma \Downarrow_{pc}^E \sigma, c}
@@ -480,7 +479,7 @@ Alice is indeed the person observing the facet:
        \endgroup
         \\\\
         \begingroup
-        \color{\colorMATH}
+        \color{colorMATH}
         \begin{array}{ccc}
           \inferrule[\textsc{Box}]
                     {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \and
@@ -504,7 +503,7 @@ Alice is indeed the person observing the facet:
        \hfill \textit{(Facet Creation)}
        \\
        \begin{array}{ccc}
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Split}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
             \{+\ell, -\ell\} \cap pc = \varnothing \\\\
@@ -513,14 +512,14 @@ Alice is indeed the person observing the facet:
            v = \formfacet{pc \cup \{+\ell\}}{v_1}{v_2}}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Pos}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            + \ell \in pc \\\\
            e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Neg}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            - \ell \in pc \\\\
@@ -534,14 +533,14 @@ Alice is indeed the person observing the facet:
     \\
     \[
     \begin{array}{cc}
-      {\color{\colorFAC}
+      {\color{colorFAC}
         \inferrule[\textsc{Let-Label}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \langle \lambda x. ~ e, \rho' \rangle \\\\
            \alpha \not\in dom(\sigma') \and \sigma'' = \sigma' [\alpha \mapsto \langle \lambda x. ~ e, \rho' \rangle] \\\\
            e_2, \rho [ \ell \mapsto \alpha ], \sigma'' \Downarrow_{pc}^E \sigma''', v}
           {(\code{let-label} ~ \ell ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Obs}]
                     {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell
                       \and e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v  \\\\
@@ -556,21 +555,21 @@ Alice is indeed the person observing the facet:
     \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v_1 ~ v_2), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
     \\
     \begingroup
-    \color{\colorMATH}
+    \color{colorMATH}
     \begin{displaymath}
       \begin{array}{c}
         \begin{array}{ccc}
-          {\color{\colorMATH}
+          {\color{colorMATH}
           \inferrule[\textsc{App-$\star$}]
           { }
           {(\star ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma, \star}}
           & 
-          {\color{\colorMATH}
+          {\color{colorMATH}
           \inferrule[\textsc{App-Base}]
           {e, \rho'[x \mapsto v], \sigma \Downarrow_{pc}^E \sigma', v' }
           {(\langle \lambda x.~e, \rho' \rangle ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Split}]
           {\{+\ell, -\ell\} \cap pc = \varnothing \and
             (v^+ ~ v), \rho, \sigma \Downarrow_{pc \cup \{+\ell\}}^A \sigma', {v^+}' \\\\
@@ -581,13 +580,13 @@ Alice is indeed the person observing the facet:
         \\
         \begin{array}{cc}
         \\\\
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Facet-Pos}]
           {+\ell \in pc \\\\
             (v^+ ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}
           {(\facet{\ell}{v^+}{v^-} ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Facet-Neg}]
           {-\ell \in pc \\\\
             (v^- ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}
@@ -949,16 +948,16 @@ when necessary.
          (let write ([var var]
                      [pc (current-pc)])
            (if (box? var)
-               ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc, v)$@>
+               ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc, v)$@>
                (set-box! var (construct-facet (current-pc) v (unbox var)))
                ; Else split
                (mkfacet
                  (facet-labelname (unbox var))
-                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{+l\}, v)$@>
+                 ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc \cup \{+l\}, v)$@>
                  (write
                    (facet-left (unbox var))
                    (set-add pc (pos (facet-labelname var))))
-                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{-l\}, v)$@>
+                 ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc \cup \{-l\}, v)$@>
                  (write
                    (facet-right (unbox var))
                    (set-add pc (neg (facet-labelname var))))))))]))
