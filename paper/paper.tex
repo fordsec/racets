@@ -66,14 +66,13 @@
 }
 
 %% To color math, put it in an \mc command, e.g., \mc{$a$}
-\newcommand{\colorMATH}{black!20!blue}
+\definecolor{colorMATH}{HTML}{3E5BA9}
+\definecolor{colorFAC}{HTML}{9F1D20}
 \newcommand{\colorID}{black!20!blue}
-\newcommand{\colorCOMM}{0.133,0.545,0.133}
-\newcommand{\colorFAC}{black!20!red}
-\newcommand{\blue}[1] {{\color{\colorMATH} #1}}
-\newcommand{\fcol}[1] {{\color{\colorFAC} #1}}
-\newcommand{\bmth}[1] {{\color{\colorMATH} $#1$}}
-\newcommand{\rmth}[1] {{\color{\colorFAC} $#1$}}
+\newcommand{\blue}[1] {{\color{colorMATH} #1}}
+\newcommand{\fcol}[1] {{\color{colorFAC} #1}}
+\newcommand{\bmth}[1] {{\color{colorMATH} $#1$}}
+\newcommand{\rmth}[1] {{\color{colorFAC} $#1$}}
 \newcommand{\code}[1]{\lstinline{#1}}
 
 \newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
@@ -301,8 +300,8 @@ secrecy of \code{board}. Protecting data {w.r.t.} policies is instead handled
 automatically and implicitly by a runtime monitor.
 When Alice and Bob want to play a game, they both create a
 \emph{label} to protect their data. A label is unique id mapped to a policy predicate
-that takes an key (e.g., the current user's name) and returns true or false to indicate
-permission for the label. Alice's label is used to annotate data she wants
+that takes a key (e.g., the current user's name) and returns true or false to indicate
+permission for the label. Alice's label is used to annotate the data she wants
 to be kept secret. Supposing Alice chooses to be player 1, she may use the
 following label:
 
@@ -327,20 +326,21 @@ should appear to her, and the negative (right) to everyone else:
 \end{lstlisting}
 
 In the above example, \blue{$\star$} (lazy failure) is used in the negative branch
-to ensure execution will fail if Bob tries to observe Alice's secret gameboard.
-The $\code{(obs}\ \fcol{e_\ell}\ \blue{e_\text{key}}\ \blue{e_\text{fac}}\code{)}$ form takes
-a label, a key, and a faceted value. Explicit observation projects a single label
-$\fcol{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ to either its positive or negative facet,
-depending on whether the policy associated with $\fcol{e_\ell}$ returns true for key
-$\blue{e_\text{key}}$. If Bob tries to observe Alice's board, the policy predicate
-will return false (from \texttt{(= 1 $\blue{2}$)}) and Alice's negative facet $\blue{\star}$ will result.
+to ensure execution will fail if Bob tries to observe Alice's secret gameboard. To observe
+Alice's gameboard, Bob can try to use $\code{(obs}\ \fcol{e_\ell}\ \blue{e_\text{key}}\ 
+\blue{e_\text{fac}}\code{)}$ form, which takes a label, a key, and a faceted value.
+Explicit observation projects a single label $\fcol{e_\ell}$ in faceted value $\blue{e_\text{fac}}$ 
+to either its positive or negative facet, depending on whether the policy associated 
+with $\fcol{e_\ell}$ returns true for key $\blue{e_\text{key}}$. If Bob tries to observe 
+Alice's board, the policy predicate will return false (from \texttt{(= 1 $\blue{2}$)}) 
+and Alice's negative facet $\blue{\star}$ will result.
 
-In other applications, Alice might choose a sensible default value to
+In other applications, Alice may choose a sensible default value to
 reveal to others---she may even want to create a \emph{nested}
-facet. For example, a social-networking application might use a
+facet. For example, a social-networking application may use a
 nested facet consisting of two labels for
-\fcol{$\ell_{\text{Friends}}$} and \fcol{$\ell_{\text{Family}}$}. A user
-could then present three views of her social-media profile: \bmth{p_1} to
+\rmth{\ell_{\text{Friends}}} and \rmth{\ell_{\text{Family}}}. A user
+can then present three views of her social-media profile: \bmth{p_1} to
 her family, containing her phone number and other contact information,
 \bmth{p_2} to her friends showing her interests, and \bmth{p_3} to
 everyone else, showing only her name and email.
@@ -390,10 +390,10 @@ facets of a value faceted by a label $\fcol{\ell}$, and on the positive branch
 the function uses $\texttt{set!}$ to mutate a variable $x$ from $2$ to $3$,
 FE semantics will set $x$ to $\facet{\ell}{3}{2}$ so that the value $3$
 cannot be leaked from the secure context (speculative execution under the
-$\fcol{+\ell}$ facet). This is because, for the duration of the the app ``split'',
-the evaluation context records that all values are implicitly guarded by $\fcol{+\ell}$
-and then $\fcol{-\ell}$, respectively. If the semantics for $\texttt{set!}$ does
-not make this faceting explicit, a sensitive value could leak from one PC to another.
+\rmth{+\ell} facet). This is because, for the duration of the app ``split'',
+the evaluation context records that all values are implicitly guarded by \rmth{+\ell}
+and then \rmth{-\ell}, respectively. If the semantics for $\texttt{set!}$ does
+not make this faceting explicit, a sensitive value can leak from one PC to another.
 We expand upon these subtleties in Section~\ref{sec:semantics},
 where we present a complete semantics for faceted execution.
 
@@ -408,12 +408,6 @@ Alice is indeed the person observing the facet:
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
 (obs alice-label 1 alice-board) ; Returns Alice's board
 \end{lstlisting}
-
-If we had passed any value other than $1$ into the \code{obs} form,
-Alice's policy would return \code{false}. In this case, the \code{obs}
-form would reduce to $\blue{\star}$, and the program would fail
-(indicating that someone other than Alice attempted to view her
-board).
 
 \section{A Formal Semantics for Faceted Execution}
 \label{sec:semantics}
@@ -466,7 +460,7 @@ board).
     \begin{displaymath}
       \begin{array}{c}
         \begingroup
-        \color{\colorMATH}
+        \color{colorMATH}
         \begin{array}{cccc}
           \inferrule[\textsc{Const}]{ }
                                     {c, \rho, \sigma \Downarrow_{pc}^E \sigma, c}
@@ -485,7 +479,7 @@ board).
        \endgroup
         \\\\
         \begingroup
-        \color{\colorMATH}
+        \color{colorMATH}
         \begin{array}{ccc}
           \inferrule[\textsc{Box}]
                     {e, \rho, \sigma \Downarrow_{pc}^E \sigma', v \and
@@ -509,7 +503,7 @@ board).
        \hfill \textit{(Facet Creation)}
        \\
        \begin{array}{ccc}
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Split}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \and
             \{+\ell, -\ell\} \cap pc = \varnothing \\\\
@@ -518,14 +512,14 @@ board).
            v = \formfacet{pc \cup \{+\ell\}}{v_1}{v_2}}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Pos}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            + \ell \in pc \\\\
            e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v}
           {(\code{fac} ~ e_1 ~ e_2 ~ e_3), \rho, \sigma \Downarrow_{pc}^E \sigma'', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Fac-Create-Neg}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell \\\\
            - \ell \in pc \\\\
@@ -539,14 +533,14 @@ board).
     \\
     \[
     \begin{array}{cc}
-      {\color{\colorFAC}
+      {\color{colorFAC}
         \inferrule[\textsc{Let-Label}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \langle \lambda x. ~ e, \rho' \rangle \\\\
            \alpha \not\in dom(\sigma') \and \sigma'' = \sigma' [\alpha \mapsto \langle \lambda x. ~ e, \rho' \rangle] \\\\
            e_2, \rho [ \ell \mapsto \alpha ], \sigma'' \Downarrow_{pc}^E \sigma''', v}
           {(\code{let-label} ~ \ell ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{Obs}]
                     {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \ell
                       \and e_2, \rho, \sigma' \Downarrow_{pc}^E \sigma'', v  \\\\
@@ -561,21 +555,21 @@ board).
     \hfill \textit{(Possibly-Faceted Application)} \boxed{\fcol{(v_1 ~ v_2), \rho, \sigma \Downarrow_{pc}^A \sigma, v}}
     \\
     \begingroup
-    \color{\colorMATH}
+    \color{colorMATH}
     \begin{displaymath}
       \begin{array}{c}
         \begin{array}{ccc}
-          {\color{\colorMATH}
+          {\color{colorMATH}
           \inferrule[\textsc{App-$\star$}]
           { }
           {(\star ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma, \star}}
           & 
-          {\color{\colorMATH}
+          {\color{colorMATH}
           \inferrule[\textsc{App-Base}]
           {e, \rho'[x \mapsto v], \sigma \Downarrow_{pc}^E \sigma', v' }
           {(\langle \lambda x.~e, \rho' \rangle ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Split}]
           {\{+\ell, -\ell\} \cap pc = \varnothing \and
             (v^+ ~ v), \rho, \sigma \Downarrow_{pc \cup \{+\ell\}}^A \sigma', {v^+}' \\\\
@@ -586,13 +580,13 @@ board).
         \\
         \begin{array}{cc}
         \\\\
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Facet-Pos}]
           {+\ell \in pc \\\\
             (v^+ ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}
           {(\facet{\ell}{v^+}{v^-} ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}}
           & 
-          {\color{\colorFAC}
+          {\color{colorFAC}
           \inferrule[\textsc{App-Facet-Neg}]
           {-\ell \in pc \\\\
             (v^- ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma', v'}
@@ -803,7 +797,7 @@ Similarly, program counters are sets of branches. However, we must
 still ask how we will keep track of the ``current'' program
 counter. Our implementation uses Racket's parameters, though other
 mechanisms (such as continuation marks\kris{cite}, to which parameters
-macro-expand) could also be used. \racets defines the parameter
+macro-expand) can also be used. \racets defines the parameter
 \code{current-pc}, and updates it as computation progresses:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=racets]
@@ -954,16 +948,16 @@ when necessary.
          (let write ([var var]
                      [pc (current-pc)])
            (if (box? var)
-               ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc, v)$@>
+               ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc, v)$@>
                (set-box! var (construct-facet (current-pc) v (unbox var)))
                ; Else split
                (mkfacet
                  (facet-labelname (unbox var))
-                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{+l\}, v)$@>
+                 ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc \cup \{+l\}, v)$@>
                  (write
                    (facet-left (unbox var))
                    (set-add pc (pos (facet-labelname var))))
-                 ; <@$\color[rgb]{\colorCOMM}\var{write}(\sigma, \alpha, pc \cup \{-l\}, v)$@>
+                 ; <@$\color{colorFAC}\var{write}(\sigma, \alpha, pc \cup \{-l\}, v)$@>
                  (write
                    (facet-right (unbox var))
                    (set-add pc (neg (facet-labelname var))))))))]))
@@ -1149,7 +1143,7 @@ the answer, as \code{http-response} cannot accept a faceted value.
 
 \paragraph*{Module Interactions in \racets}
 
-There is a wealth of existing Racket code we might like to incorporate
+There is a wealth of existing Racket code we may like to incorporate
 into \racets programs. For example, our case study uses the
 \texttt{web-server} framework for building web applications. However,
 in general, we believe that interacting with code not written using
@@ -1258,7 +1252,7 @@ Several other efforts into dynamic analysis for information flow are
 worth noting. \citet{Stefan:2011} first presented \code{LIO}---a monad
 (with implementation in Haskell) that tracks privilege of the current
 program counter and forbids effects that would violate the security
-policy. It might be surprising that \code{LIO}
+policy. It may be surprising that \code{LIO}
 works well for Haskell programs, given that faceted execution is
 more precise than \code{LIO}---allowing values to become faceted
 rather than halting the program. One key difference is that Haskell
