@@ -241,7 +241,7 @@ hygienic macro system that allows essentially any linguistic form
 to be modified arbitrarily.
 
 In this paper we present \racets, an implementation of policy-agnostic
-programming in Racket via macros. \racets provides facilities for
+programming in Racket via macros~\cite{Kohlbecker:1986, Dybvig:1992}. \racets provides facilities for
 creating policies and faceting secure data with those
 policies. \racets also extends several core forms in Racket to work
 with faceted values (our implementation is detailed in
@@ -761,7 +761,7 @@ definition in~\cite{Austin:2012}, we elide it here.
 \label{sec:implementation}
 
 The semantics of faceted execution is an extension of the lambda
-calculus, leading to a natural question: can we use Racket's macros to
+calculus, leading to a natural question: can we use Racket's macros~\cite{Kohlbecker:1986, Dybvig:1992} to
 extend Racket to faceted execution? We will see that the answer is
 yes, and the translation from the big-step rules is surprisingly
 straightforward. This section of our paper describes the design of
