@@ -796,7 +796,7 @@ positive or negative labels:
 Similarly, program counters are sets of branches. However, we must
 still ask how we will keep track of the ``current'' program
 counter. Our implementation uses Racket's parameters, though other
-mechanisms (such as continuation marks\kris{cite}, to which parameters
+mechanisms (such as continuation marks~\cite{clements2001modeling}, to which parameters
 macro-expand) can also be used. \racets defines the parameter
 \code{current-pc}, and updates it as computation progresses:
 
