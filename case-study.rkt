@@ -65,7 +65,7 @@
     TEXT/HTML-MIME-TYPE  ; MIME type for content.
     '()                  ; Additional HTTP headers.
     (list                ; Content (in bytes) to send to the browser.
-     (string->bytes/utf-8 "<html><head><link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\" integrity=\"sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u\" crossorigin=\"anonymous\"><link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css\" integrity=\"sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp\" crossorigin=\"anonymous\"></head><body>")
+     (string->bytes/utf-8 "<html><head><link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\" integrity=\"sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u\" crossorigin=\"anonymous\"><link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css\" integrity=\"sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp\" crossorigin=\"anonymous\"></head><body style=\"padding-left:10px\">")
      (string->bytes/utf-8 content)
      (string->bytes/utf-8 "</body></html>"))))
 
@@ -120,7 +120,7 @@
           [ans (makep1strike x y)])
       (http-response 
        (if ans
-           "<p>Congratulations! You hit player 2!</p>"
+           "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
            "<p>No hit :(</p>")))))
 
 (define makep2strike 
@@ -136,7 +136,7 @@
           [ans (makep2strike x y)])
      (http-response 
       (if ans
-          "<p>Congratulations! You hit player 1!</p>"
+           "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
           "<p>No hit :(</p>")))))
 
 ; Pretty-print a game board

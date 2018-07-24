@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usetikzlibrary{cd}
 \usepackage{xcolor}
+\usepackage[labelsep=quad,indention=10pt]{subfig}
 \usepackage{mathpartir} % Inference rules
 \usepackage[ruled]{algorithm2e} % For algorithms
 \usepackage{setspace}
@@ -990,10 +991,124 @@ general remains (to our knowledge) an open problem.
 
 Because of Racket's flexible macro system, our implementation of
 faceted execution is much smaller than other systems: our core macros
-comprise only 170 source lines of Racket, with another 120 lines of
-library code to perform various facet-related functions. 
+comprise roughly 170 source lines of Racket, with another 120 lines of
+library code to perform various facet-related functions.
 
-We plan to make our prototype of \racets available publicly.
+\paragraph*{Case Study: Battleship in Racets}
+
+\begin{figure*}
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{a.png}%
+    \label{fig:player1}%
+  } 
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{b.png}%
+    \label{fig:player1player2}%
+  }
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=.7in]{c.png}%
+    \label{fig:player2strike}%
+  }
+  \vspace{.3in}
+  \quad
+  \subfloat[]{%
+    \includegraphics[height=1.1in]{d.png}%
+    \label{fig:player1afterstrike}%
+  }
+  \caption{Screenshots from our Battleship case study.}
+  \label{fig:case}
+\end{figure*}
+
+To gain perspective on how Racets enables policy-agnostic programming,
+we scaled our implementation from Section~\ref{sec:overview} to a
+web-based game of Battleship written in Racets. Our implementation
+uses Racket's \texttt{web-server} framework~\cite{webserver}, which
+defines an API for writing HTTP-based server applications. 
+
+Figure~\ref{fig:case} shows several screenshots of our Battleship
+application. The first screenshot~\ref{fig:player1} shows the board as
+viewed by player 1 (note the parameter \texttt{/player1/player1}),
+while the second shows the empty board observed when player 2 attempts
+to view player 1's board. The screenshot in~\ref{fig:player2strike}
+shows the response seen by player 2 upon a successful hit. Finally
+screenshot~\ref{fig:player1afterstrike} shows player one's board with
+the ship on \bmth{(3,2)} removed.
+
+When running, our game server provides several routes that a user can
+access:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define-values (dispatch generate-url)
+  (dispatch-rules
+    [("player1" (string-arg)) player1board]
+    [("player2" (string-arg)) player2board]
+    [("player1strike" (string-arg)) p1strike]
+    [("player2strike" (string-arg)) p2strike]))
+\end{lstlisting}
+
+The route \texttt{/player1/<id>} (or \texttt{/player2/<id>}) renders
+player 1's game board when viewed as \texttt{<id>}. We facet game
+boards with policies that reveal player 1's board when \texttt{<id>}
+is \texttt{player1}, and do the same with player 2:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define p1l (mkpol "player1"))
+(define p1board
+  (box (fac p1l
+            (add-pieces (makeboard) '(1 2 ldots))
+            (makeboard))))
+\end{lstlisting}
+
+The board is explicitly made into a box: this is because the board's
+state will change as player 2 makes moves and eliminates pieces from
+their board. The \code{player1board} function implements the logic to
+render player 1's board as an HTML table. The argument \code{viewer}
+corresponds to the \texttt{<id>} route argument, and is passed to
+\code{player1board} by the framework. This argument is then used to
+observe the board game
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define player1board
+  (ext-lambda (request viewer)
+         (http-response "<h1>Player 1's Game Board</h1>"
+                        (pretty-print 
+                           (obs p1l name (deref p1board))))))
+\end{lstlisting}
+
+The implementation of \code{player1board} uses a special form
+\code{ext-lambda}, discussed at the end of this section, to allow code
+from Racets to be executed by the framework (which is not prepared to
+execute faceted code).
+
+The function \code{p1strike} allows player 1 to make a guess as to the
+position of ships on player 2's board. The function parses the
+position into two coordinates and then calls \code{mark-hit} to
+perform the hit, updating player 2's board and then observing the
+result to answer (to player 1) whether the result was a hit or not:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define p1strike
+  (ext-lambda
+   (request position)
+   (let* ([x (char-to-num (string-ref position 0))]
+          [y (char-to-num (string-ref position 2))]
+          [ans (mark-hit p2board x y)]
+      (set! p2board (car ans))
+      (http-response
+       (if (cdr (obs p2l "player2" ans)) |label{lineno:explicitobs}|
+           "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
+           "<p>No hit :(</p>")))))))
+\end{lstlisting}
+
+Note that we need to use an explicit \code{obs} form on
+line~\ref{lineno:explicitobs}. This is because---as \code{p2board} is
+a facet---the result will also be a faceted value. When we want to
+display the output to player 1, our code needs to explicitly observe
+the answer, as \code{http-response} cannot accept a faceted value.
+
+\paragraph*{}
 
 \section{Conclusion}
 \label{sec:conclusion}
