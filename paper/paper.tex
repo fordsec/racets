@@ -1,4 +1,4 @@
-\documentclass[review=true,acmlarge]{acmart}
+\documentclass[acmlarge]{acmart}
 
 \usepackage{booktabs} % For formal tables
 \usepackage[linguistics]{forest}
@@ -75,10 +75,10 @@
 \newcommand{\rmth}[1] {{\color{colorFAC} $#1$}}
 \newcommand{\code}[1]{\lstinline{#1}}
 
-\newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
-\newcommand{\zw}[1]{\comm[\color{green!66!black}]{Zhanpeng}{#1}}
-\newcommand{\kris}[1]{\comm[\color{blue}]{Kris}{#1}}
-\newcommand{\tom}[1]{\comm[\color{orange}]{Tom}{#1}}
+%% \newcommand{\comm}[3][\color{red}]{{#1{[{#2}: {#3}]}}}
+%% \newcommand{\zw}[1]{\comm[\color{green!66!black}]{Zhanpeng}{#1}}
+%% \newcommand{\kris}[1]{\comm[\color{blue}]{Kris}{#1}}
+%% \newcommand{\tom}[1]{\comm[\color{orange}]{Tom}{#1}}
 \newcommand{\lang}[0]{$\lambda_\textsc{FE}$\xspace}
 \newcommand{\racets}[0]{$\textsc{Racets}$\xspace}
 \newcommand{\facet}[3]{{\fcol{\ensuremath{\langle \, {#1} \: ? \: {#2} \diamond \: {#3} \, \rangle}}}}
@@ -733,7 +733,7 @@ by anyone using the facet:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=rebindingexample]
 (define alice-label (let-label l (lambda (x) (= x alice)) l))
-(define x (fac alice-label 1 0))
+(define x (facet alice-label 1 0))
 (let ([alice-label (let-label l (lambda (x) true) l)]) |\label{lineno:alicelab}|
   (obs alice-label 1 x)) ; Should return |\facet{\texttt{alice-label}}{1}{0}|
 \end{lstlisting}
@@ -850,7 +850,7 @@ for facet creation. But according to our semantics, the following
 snippet should produce \code{true} if \bmth{+\ell \in pc}:
 
 \begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=other,numbers=none]
-(fac l true (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
+(facet l true (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
 \end{lstlisting}
 
 If we were to implement \code{fac} as a function, it would force
@@ -869,7 +869,7 @@ al.~\cite{Austin:2012}) we omit its definition here.
 \begin{figure}
 {\small
 \begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=racets]
-(define-syntax-rule (fac l e1 e2)
+(define-syntax-rule (facet l e1 e2)
   (cond
 \end{lstlisting}
 \vspace{-.7\baselineskip}
@@ -1089,7 +1089,7 @@ is \texttt{player1}, and do the same with player 2:
 \begin{lstlisting}[language=Racket,escapechar=|,name=case]
 (define p1l (mkpol "player1"))
 (define p1board
-  (box (fac p1l
+  (box (facet p1l
             (add-pieces (makeboard) '(1 2 ldots))
             (makeboard))))
 \end{lstlisting}
