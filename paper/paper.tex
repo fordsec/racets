@@ -88,7 +88,7 @@
 
 \begin{document}
 
-\title{\racets: Policy{-}Agnostic Programming in Racket}
+\title{\racets: Faceted Execution in Racket}
 
 \author{Kristopher Micinski}
 \affiliation{%
@@ -115,7 +115,6 @@
  \country{USA}}
 \email{gilray@uab.edu}
 
-\begin{abstract}lorem ipsum...\end{abstract}
 
 %% \begin{CCSXML}
 %% <ccs2012>
@@ -146,6 +145,27 @@
 %% \ccsdesc[300]{Computer systems organization~Redundancy}
 %% \ccsdesc{Computer systems organization~Robotics}
 %% \ccsdesc[100]{Networks~Network reliability}
+
+
+\begin{abstract}
+  Faceted execution is a linguistic paradigm for dynamic information-flow
+  control with the distinguishing feature that some program values may be
+  \emph{faceted}. Faceted values simulate multiple executions (for different
+  combinations of security labels) at once. This enables policy-agnostic programming:
+  a style of programming where information-flow policies are stated independently
+  of core program logic and are then enforced at runtime by a dynamic monitor. This
+  approach enforces privacy constraints without requiring systems to be updated at every
+  relevant code-point whenever a privacy policy needs to be added or changed.
+
+  In this paper, we present \racets: an implementation of faceted execution for
+  core language features such as application, mutation, and conditionals, using
+  Racket's macro system. As Racket permits even core forms to be instrumented
+  or rewritten arbitrarily, we are able to design a library of macros for 
+  faceted execution in Scheme. We review faceted execution, formalize its operation,
+  show how these big-step rules are turned into macros, and then discuss
+  issues of interoperability with non-faceted Racket code.
+\end{abstract}
+
 
 \keywords{security, faceted execution, macros, information flow, languages as libraries}
 
