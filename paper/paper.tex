@@ -410,12 +410,6 @@ Alice is indeed the person observing the facet:
 (obs alice-label 1 alice-board) ; Returns Alice's board
 \end{lstlisting}
 
-If we had passed any value other than $1$ into the \code{obs} form,
-Alice's policy would return \code{false}. In this case, the \code{obs}
-form would reduce to $\blue{\star}$, and the program would fail
-(indicating that someone other than Alice attempted to view her
-board).
-
 \section{A Formal Semantics for Faceted Execution}
 \label{sec:semantics}
 
