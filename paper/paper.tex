@@ -660,7 +660,7 @@ and writes may occur within a privilaged context, and care must be
 taken to form facets when \rmth{pc} is nonempty. To understand why,
 consider the following example\footnote{Our formal semantics elides
   \code{if}, though it may be obtained via a Church encoding if
-  desired as in Austin et al.\cite{Austin:12}. Our implementation
+  desired as in Austin et al.\cite{Austin:2012}. Our implementation
   includes \code{if} but not other constructs such as \code{cond}}:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=boxexample]
@@ -749,8 +749,8 @@ uses the \rmth{\var{obs}} meta-function to select the appropriate
 branch based on the value returned by the predicate associated with
 the label. This meta-function accounts for the fact that the label
 being observed may appear arbitrarily deep in the facet (or not at
-all). \zw{We elide the description of the meta-function \rmth{\var{obs}}
-here, but it is fully described in Austin et al.~\cite{Austin:2012}}
+all). As our implementation of \rmth{\var{obs}} is unchanged from its
+definition in~\cite{Austin:2012}, we elide it here.
 
 \section{Faceted Execution as Macros}
 \label{sec:implementation}
@@ -971,11 +971,7 @@ when necessary.
 Figure~\ref{fig:setbang}, which inlines the definition of the
 \textit{write} metafunction from Section~\ref{sec:semantics} to
 consider the case under which a facet is used when an address is
-expected. \zw{The role of the \textit{write} metafunction is to 
-recursively dig into faceted value, and make writes to the addresses.
-If it is an address at the beginning, which hits the base case,
-the \textit{write} metafunction constructs a new faceted value according
-to \bmth{pc} and makes modification to the address.}
+expected.
 
 Facet observation is handled similarly, first evaluating the label to
 produce a policy predicate, followed by evaluating the policy's
@@ -1066,7 +1062,7 @@ defines an API for writing HTTP-based server applications.
 
 Figure~\ref{fig:case} shows several screenshots of our Battleship
 application. The first screenshot~\ref{fig:player1} shows the board as
-viewed by player 1 (note the parameter \texttt{/player1/player1}),
+viewed by player 1 (using the route \texttt{/player1/player1}),
 while the second shows the empty board observed when player 2 attempts
 to view player 1's board. The screenshot in~\ref{fig:player2strike}
 shows the response seen by player 2 upon a successful hit. Finally
@@ -1134,13 +1130,13 @@ result to answer (to player 1) whether the result was a hit or not:
           [ans (mark-hit p2board x y)]
       (set! p2board (car ans))
       (http-response
-       (if (cdr (obs p2l "player2" ans)) |label{lineno:explicitobs}|
+       (if (cdr (obs p2l "player2" ans))
            "<h1>Congratulations!</h1> <h4>You hit player 2!</h4>"
            "<p>No hit :(</p>")))))))
 \end{lstlisting}
 
 Note that we need to use an explicit \code{obs} form on
-line~\ref{lineno:explicitobs}. This is because---as \code{p2board} is
+line 25. This is because---as \code{p2board} is
 a facet---the result will also be a faceted value. When we want to
 display the output to player 1, our code needs to explicitly observe
 the answer, as \code{http-response} cannot accept a faceted value.
