@@ -115,7 +115,30 @@
  \country{USA}}
 \email{gilray@uab.edu}
 
-\begin{abstract}lorem ipsum...\end{abstract}
+\begin{abstract}
+Faceted Execution (FE) is a linguistic paradigm for dynamic
+information flow control. Using faceted execution, secure program data
+is represented by \emph{facets}: decision trees that encode how the
+data should appear to its owner (represented by a label) versus everyone
+else. When labels are allowed to be first-class (i.e., predicates that
+decide at runtime which data to reveal), faceted execution enables
+\emph{policy-agnostic programming}: a programming style that allows
+privacy policies for data to be enforced independently of code that
+computes on that data.
+
+To date, implementations of faceted execution are relatively
+heavyweight: requiring either changing the language runtime or the
+application code (e.g., by using monads). In this paper, we present
+\racets: an extension of Racket to faceted execution via macros. Given
+Racket's highly-expressive macro system, our implementation follows
+relatively directly from the semantics of faceted execution. To
+demonstrate how \racets can be used for policy-agnostic programming,
+we use it to build a web-based game of Battleship. Our implementation
+sheds light on several interesting issues in interacting with code
+written without faceted execution. \racets is currently available
+under an open-source license on GitHub.
+
+\end{abstract}
 
 %% \begin{CCSXML}
 %% <ccs2012>
