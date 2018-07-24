@@ -1,3 +1,5 @@
+; Note: this code is only partially in Racets. See our full case study
+; in `case-study.rkt`.
 ;#lang racket
 #lang reader "racets.rkt"
 (require racket/stxparam
