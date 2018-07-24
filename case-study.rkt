@@ -176,5 +176,3 @@
     ))
 
 (serve/dispatch dispatch)
-
-(display (pretty-print p1board))
