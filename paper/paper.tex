@@ -1125,7 +1125,33 @@ a facet---the result will also be a faceted value. When we want to
 display the output to player 1, our code needs to explicitly observe
 the answer, as \code{http-response} cannot accept a faceted value.
 
-\paragraph*{}
+\paragraph*{Module Interactions in \racets}
+
+There is a wealth of existing Racket code we might like to incorporate
+into \racets programs. For example, our case study uses the
+\texttt{web-server} framework for building web applications. However,
+in general, we believe that interacting with code not written using
+faceted execution is a challenging open problem, and we do not know of any
+principled solutions in the literature.
+
+One immediate problem in \racets is how to pass functions from \racets
+to plain Racket code. For example, the \texttt{web-server} framework
+is written in Racket, and does not know how to call tagged closures
+from \racets. As a stopgap, we added an \code{ext-lambda} form to
+\racets. This form allows creating a Racket-style lambda in Racets
+that will be used by functions in other modules, necessary for the
+implementation of our case study.
+
+We plan to explore interactions with unfaceted code more in the
+future, and believe it will an exciting direction. For example, once
+execution escapes \racets, we have no guarantee that the privacy
+policy won't be violated. One solution may be to implicitly perform an
+\code{obs} based on the current \rmth{pc} at points where \racets
+interacts with unfaceted modules. But we do not fully understand the
+ramifications or ergonomics of this choice, and suspect there may be a
+wide array of design choices to handle these module interactions
+including security type systems and blame (to track which module
+violated the privacy policy).
 
 \section{Related Work and Future Directions}
 
