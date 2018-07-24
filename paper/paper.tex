@@ -357,7 +357,7 @@ facets.
 %% \end{center}
 
 Because the applied function can be stateful, faceted execution also
-maintains the current privilege level in a \emph{program counter} (PC). The
+vmaintains the current privilege level in a \emph{program counter} (PC). The
 program counter is a property of the current evaluation context and is used
 to build facets when writes are made to the store in a privileged context.
 For example, if a stateful function ``splits'' when applied on both the positive and negative
@@ -372,11 +372,28 @@ not make this faceting explicit, a senstive value could leak from one PC to anot
 We expand upon these subtleties in Section~\ref{sec:semantics},
 where we present a complete semantics for faceted execution.
 
+After making various moves, we eventually want to reveal the game
+boards, pulling the positive view out of \code{alice-board} to display
+Alice's board. To do this, we must \emph{observe} the facet with an
+\code{obs} form. Because Alice's board is faceted with
+\code{alice-label}, we specify that we want to observe
+\code{alice-label} and pass in an argument to that label showing that
+Alice is indeed the person observing the facet:
+
+\begin{lstlisting}[language=Racket,escapechar=|,name=example]
+(obs alice-label 1 alice-board) ; Returns Alice's board
+\end{lstlisting}
+
+If we had passed any value other than $1$ into the \code{obs} form,
+Alice's policy would return \code{false}. In this case, the \code{obs}
+form would reduce to $\blue{\star}$, and the program would fail
+(indicating that someone other than Alice attempted to view her
+board).
 
 \section{A Formal Semantics for Faceted Execution}
 \label{sec:semantics}
 
-\begin{figure}
+\begin{figure*}
 \begin{displaymath}
   \begin{array}{lcrcl}
     \blue{c} & \blue{\in} & \blue{const} & \blue{::=} & \blue{'() \mid \code{true} \mid \code{false} \mid \ldots} \\
@@ -389,9 +406,9 @@ where we present a complete semantics for faceted execution.
     & & & \blue{\mid} & \blue{(\code{obs} ~ e ~ e ~ e)} \\
   \end{array}
 \end{displaymath}
+\caption{Syntax of \lang.}
 \label{fig:syntax}
-\caption{Syntax of \lang. Forms unique to facets are shown in \fcol{red}.}
-\end{figure}
+\end{figure*}
 
 \begin{figure*}
     \begin{tabular}{cc}
