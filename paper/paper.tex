@@ -1113,6 +1113,102 @@ the answer, as \code{http-response} cannot accept a faceted value.
 
 \paragraph*{}
 
+\section{Related Work and Future Directions}
+
+To the best of our knowledge, we are the first authors to present an
+implementation of faceted execution using hygienic macros. There are
+several threads of related work in dynamic information flow and
+programming paradigms for information flow.
+
+Information-flow was first formalized by \citet{Denning:1976}.
+In her seminal work on a lattice model
+for information flow, she outlined challenges and potential solutions
+to static information-flow checking. Subsequently, \citet{Goguen:82}
+defined noninterference, which formalized the idea that privileged
+data should not influence publicly observable
+outputs. \citet{Clarkson:08} later recognized that
+information-flow properties fit into a class of program properties
+that could not be characterized by a single trace of a program, but
+rather a set of traces, and called these hyperproperties.
+
+Along with definitions of information flow, there has also been
+significant interest in mechanisms for enforcing information
+flow. This work can be broadly divided into static and dynamic
+enforcement mechanisms for information flow security. Of the
+mechanisms for static information flow, security type systems have
+gained the most use. First introduced by \citet{Volpano:1997}, these
+type systems augment the binding environment to track the privilege of
+variables and prevent writes to variables that would violate
+noninterference. Myers leveraged this idea to produce Jif, a variant
+of Java with an information-flow type
+system~\cite{Myers:1999}. Security type systems have been subsequently
+extended to accommodate concurrent programs~\cite{Zdancewic:03} and
+flow sensitivity~\cite{Hunt:2006}. Faceted execution does not require
+annotating the program with security types, but at the expense of
+losing a static characterization of the program's security in its type
+system.
+
+\citet{Devriese:10} first introduced secure multi-execution as a
+dynamic enforcement technique for information flow. Secure
+multi-execution runs $2^k$ copies of a program in parallel, where each
+run represents a subset of $\wp(\var{Prin})$, where $\var{Prin}$ is a
+set of principals. For example, if the principals in the program are
+Alice and Bob, secure multi-execution executes four copies of the
+program: one that replaces all secret inputs by $\bot$, one that
+replaces Bob's input by $\bot$ but Alice's input by the true input,
+one for Bob's input, and one with access to all privilaged
+information. When external effects are made (e.g., writing to disc),
+the runtime can select which variant to use based on a policy. Secure
+multi-execution prevents information flow violations at runtime by
+ensuring that observations which violate the information-flow policy
+receive a view of the data computed without access to the secret
+inputs. Secure multi-execution has been extended in a variety of ways,
+e.g., scaling to its implementation in web browsers~\cite{Bielova:11},
+adding declassification in a granular way~\cite{Rafnsson:13}, and even
+preventing side-channel attacks~\cite{Kashyap:11}.
+
+As the number of principals increases, secure multi-execution's
+overhead increases exponentially, unnecessarily duplicating work not
+influenced by secret inputs. Austin et al. introduced faceted
+execution as an optimization of secure multi-execution
+in~\cite{Austin:2012}. Instead of treating the whole program as a
+potentially-secret computation, faceted execution realizes that
+influence can be tracked and propagated in a granular way using
+facets. Notably, Austin et al.'s work does not include first-class
+labels, as it was simulating secure multi-execution, where the
+principals could not be dynamically generated.
+
+At the same time, Yang et al. first implemented Jeeves, a language
+allowing policy-agnostic programming~\cite{Yang:2012}. Policy-agnostic
+programming takes the view that programs should be written without
+regard to a particular privacy policy, because as the policy changes,
+correctly updating program logic is cumbersome and
+error-prone. Policy-agnostic programming was first implemented in the
+domain-specific language Jeeves, using an SMT solver to decide which
+view of secret data to reveal based on a policy. Later, both authors
+collaborated to implement Jeeves using faceted
+execution.~\cite{Austin:2013}. This formulation includes first-class
+labels, and is the basis for our concrete semantics.
+
+Several other efforts into dynamic analysis for information flow are
+worth noting. \citet{Stefan:2011} first presented \code{LIO}---a monad
+(with implementation in Haskell) that tracks privilege of the current
+program counter and forbids effects that would violate the security
+policy. It might be surprising that \code{LIO}
+works well for Haskell programs, given that faceted execution is
+more precise than \code{LIO}---allowing values to become faceted
+rather than halting the program. One key difference is that Haskell
+programs emphasize purity while languages such as
+JavaScript (the original target of faceted execution) does not, so much
+of the machinery for faceted execution's effect on the store is less
+interesting. Several authors have implemented related systems to
+\code{LIO}, including variants of faceted execution \cite{Schmitz:2016}
+and variants of \code{LIO} that extend its
+power to arbitrary monad transformers~\cite{james}. We believe that it
+would be possible to implement a variant of our technique that would
+give similar insights to programs using \code{LIO}, though much of the
+interesting machinery for handling state may be unnecessary.
+
 \section{Conclusion}
 \label{sec:conclusion}
 
