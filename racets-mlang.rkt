@@ -63,8 +63,11 @@
 
 ; Lambdas are rewritten into tagged closures so we can implement
 ; `racets` closures from primitives.
-(define-syntax-rule (fac-lambda xs expr)
-  (fclo (lambda xs expr)))
+
+(define-syntax (fac-lambda stx)
+  (syntax-parse stx
+    [(_ xs expr)
+    #`(fclo (lambda xs expr))]))
 
 ; Create an "external" lambda to hand across a module boundary. This
 ; is *not* an fclo, but rather it is a "plain" Racket lambda. This is
@@ -72,40 +75,53 @@
 ; expect facets, they will crash. So to use this correctly, you must
 ; use an explicit `obs` form before closing over faceted things in an
 ; ext-lambda form.
-(define-syntax-rule (ext-lambda xs expr)
-  (lambda xs expr))
 
-(define-syntax-rule (let-label l (lambda xs e) body)
-  (let ([l (labelpair (gensym 'lab)
-                      (lambda xs e))])
-    body))
+(define-syntax (ext-lambda stx)
+  (syntax-parse stx
+    [(_ xs expr)
+     #`(lambda xs expr)]))
 
-(define-syntax-rule (★) (lfail))
+(define-syntax (let-label stx)
+  (syntax-parse stx
+    [(_ l (lambda xs e) body)
+     #`(let ([l (labelpair (gensym 'lab)
+                           (lambda xs e))])
+         body)]))
+
+(define-syntax (★)
+  (syntax-parse
+      #`(lfail)))
+
 
 ; Syntax for facet construction
 ; TODO: FIX!
-(define-syntax-rule (fac l v1 v2)
-  (construct-facet-optimized (set->list (set-union (current-pc) (set (pos (labelpair-name l))))) v1 v2))
+
+(define-syntax (fac stx)
+  (syntax-parse stx
+    [(_ l v1 v2)
+     #`(construct-facet-optimized (set->list (set-union (current-pc) (set (pos (labelpair-name l))))) v1 v2) ]))
 
 ; Observe l e1 e2
 ; l - The label being checked
 ; e1 - The argument being passed to the policy 
-(define-syntax-rule (obs l e1 e2)
-  (let obsf ([lp l]
-             [v1 e1]
-             [v2 e2])
-    (if (facet? v2)
-        (let ([v2-name (facet-labelname v2)])
-          (if (equal? v2-name (labelpair-name lp))
-              (if (fac-app (labelpair-pol lp) v1)
-                  (facet-left v2)
-                  (facet-right v2))
-              (let* ([v2-l (facet-left v2)]
-                     [v2-r (facet-right v2)])
-                (mkfacet v2-name
-                         (obsf lp v1 v2-l)
-                         (obsf lp v1 v2-r)))))
-        v2)))
+(define-syntax (obs stx)
+  (syntax-parse stx
+    [(_ l e1 e2)
+     #`(let obsf ([lp l]
+                  [v1 e1]
+                  [v2 e2])
+         (if (facet? v2)
+             (let ([v2-name (facet-labelname v2)])
+               (if (equal? v2-name (labelpair-name lp))
+                   (if (fac-app (labelpair-pol lp) v1)
+                       (facet-left v2)
+                       (facet-right v2))
+                   (let* ([v2-l (facet-left v2)]
+                          [v2-r (facet-right v2)])
+                     (mkfacet v2-name
+                              (obsf lp v1 v2-l)
+                              (obsf lp v1 v2-r)))))
+             v2))]))
 
 (define-syntax (fac-module-begin stx)
   (syntax-parse stx
@@ -140,17 +156,6 @@
              (if gv et ef)))]))
 
 ; ref
-#;
-(define-syntax (ref stx)
-  (syntax-case stx ()
-    [(_ vr)
-     #`(let ([var vr]) ; let-bind vr to evaluate
-         (if (facet? var)
-             ; if var is a facet,
-             (box (construct-facet-optimized (set->list (current-pc)) var (lfail)))
-             ; else
-             (box var)))]))
-
 (define-syntax (ref stx)
   (syntax-parse stx
     [(_ vr)
