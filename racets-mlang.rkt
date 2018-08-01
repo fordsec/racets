@@ -5,6 +5,7 @@
 (require (for-syntax racket/syntax))
 (require (for-syntax racket/stxparam))
 (require (for-syntax racket/set))
+(require (for-syntax racket/base syntax/parse))
 (require racket/stxparam)
 
 (provide 
@@ -107,14 +108,14 @@
         v2)))
 
 (define-syntax (fac-module-begin stx)
-  (syntax-case stx ()
+  (syntax-parse stx
       [(#%module-begin body ...)
        #`(#%plain-module-begin
           body ...)]))
 
 ; If
 (define-syntax (fac-if stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_ guard et ef)
      #`(let iff ([gv guard])
          (if (facet? gv)
@@ -139,6 +140,7 @@
              (if gv et ef)))]))
 
 ; ref
+#;
 (define-syntax (ref stx)
   (syntax-case stx ()
     [(_ vr)
@@ -149,9 +151,20 @@
              ; else
              (box var)))]))
 
+(define-syntax (ref stx)
+  (syntax-parse stx
+    [(_ vr)
+     #`(let ([var vr]) ; let-bind vr to evaluate
+         (if (facet? var)
+             ; if var is a facet,
+             (box (construct-facet-optimized (set->list (current-pc)) var (lfail)))
+             ; else
+             (box var)))]))
+
+
 ; ref-set!
 (define-syntax (ref-set! stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_ var e)
      #`(let ([value e])
          (let setf ([var var]
@@ -171,7 +184,7 @@
 
 ; deref
 (define-syntax (deref stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_ vr)
      #`(let dereff ([var (unbox vr)])
          (if (facet? var)
@@ -188,7 +201,7 @@
 
 ; Faceted application
 (define-syntax (fac-app stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_ f . args)
      #`(let applyf ([func f])
          (cond
@@ -216,13 +229,13 @@
 ; And/or
 ;
 (define-syntax (fac-and stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_) #`#t]
     [(_ e0 es ...)
      #`(fac-if e0 (fac-and es ...) #f)]))
 
 (define-syntax (fac-or stx)
-  (syntax-case stx ()
+  (syntax-parse stx
     [(_) #`#f]
     [(_ e0 es ...)
      #`(fac-if e0 #t (fac-or es ...))]))
