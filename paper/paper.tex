@@ -226,7 +226,7 @@ Policy-agnostic programming promotes the idea that programmers should
 be able to write programs ``normally'', without concerning themselves
 with how privacy policies are enforced. Unfortunately, the
 relatively foundational linguistic changes required to enable faceted
-execution have hindered implementations thusfar. Dynamic generation
+execution have hindered implementations thus far. Dynamic generation
 of first-class security labels, tracking an arbitrary number of
 facets per value, and keeping faceted-value trees in a canonical order,
 are all central challenges in any practical implementation. For example, the
@@ -254,7 +254,7 @@ future directions in Section~\ref{sec:conclusion}.
 \section{Overview of Faceted Execution}
 \label{sec:overview}
 
-To introduce faceted execution more concretely, we present the implementation
+To introduce faceted execution more concretely, we present our implementation
 of Battleship, a small guessing game, in \racets (this section presents a
 distilled version of our case study in
 Section~\ref{sec:implementation}). In this game each player has a
@@ -976,7 +976,7 @@ expected.
 Facet observation is handled similarly, first evaluating the label to
 produce a policy predicate, followed by evaluating the policy's
 argument and a possibly-faceted value to observe. After applying the
-policy its argument, we produce the value \bmth{v^{\pm}} and descend
+policy to its argument, we produce the value \bmth{v^{\pm}} and descend
 down the facet until reaching either a base value or finding the
 selected label (at which point we select the appropriate branch).
 
@@ -1257,7 +1257,7 @@ works well for Haskell programs, given that faceted execution is
 more precise than \code{LIO}---allowing values to become faceted
 rather than halting the program. One key difference is that Haskell
 programs emphasize purity while languages such as
-JavaScript (the original target of faceted execution) does not, so much
+JavaScript (the original target of faceted execution) do not, so much
 of the machinery for faceted execution's effect on the store is less
 interesting. Several authors have implemented related systems to
 \code{LIO}, including variants of faceted execution \cite{Schmitz:2016}
