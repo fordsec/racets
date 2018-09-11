@@ -226,7 +226,7 @@ Policy-agnostic programming promotes the idea that programmers should
 be able to write programs ``normally'', without concerning themselves
 with how privacy policies are enforced. Unfortunately, the
 relatively foundational linguistic changes required to enable faceted
-execution have hindered implementations thusfar. Dynamic generation
+execution have hindered implementations thus far. Dynamic generation
 of first-class security labels, tracking an arbitrary number of
 facets per value, and keeping faceted-value trees in a canonical order,
 are all central challenges in any practical implementation. For example, the
@@ -242,9 +242,11 @@ to be modified arbitrarily.
 In this paper we present \racets, an implementation of policy-agnostic
 programming in Racket via macros~\cite{Kohlbecker:1986, Dybvig:1992}. \racets provides facilities for
 creating policies and faceting secure data with those
-policies. \racets also extends several core forms in Racket to work
+policies. \racets also rewrites several core forms in Racket to work
 with faceted values (our implementation is detailed in
-Section~\ref{sec:implementation}). We have used \racets to implement a
+Section~\ref{sec:implementation}). For example, function application
+must be treated specially to work with faceted values.
+We have used \racets to implement a
 small server-based board-game (detailed in Sections~\ref{sec:overview}
 and~\ref{sec:implementation}). Relevant related work is presented in
 section~\ref{sec:related}. We see \racets as a promising prototype for
@@ -254,7 +256,7 @@ future directions in Section~\ref{sec:conclusion}.
 \section{Overview of Faceted Execution}
 \label{sec:overview}
 
-To introduce faceted execution more concretely, we present the implementation
+To introduce faceted execution more concretely, we present our implementation
 of Battleship, a small guessing game, in \racets (this section presents a
 distilled version of our case study in
 Section~\ref{sec:implementation}). In this game each player has a
@@ -296,13 +298,17 @@ whether the guess was a hit:
 
 Although \code{mark-hit} will operate on sensitive data (the game
 boards), it is written without any special machinery to maintain the
-secrecy of \code{board}. Protecting data {w.r.t.} policies is instead handled
-automatically and implicitly by a runtime monitor.
+secrecy of \code{board}. For example, nothing in \code{mark-hit}
+prevents Bob from using \code{mark-hit} on Alice's board, but faceted
+execution would ensure that if Bob tried to do this, he would always
+see the result \code{false}. Protecting data {w.r.t.} policies is
+instead handled automatically and implicitly by a runtime monitor.
 When Alice and Bob want to play a game, they both create a
-\emph{label} to protect their data. A label is unique id mapped to a policy predicate
-that takes a key (e.g., the current user's name) and returns true or false to indicate
-permission for the label. Alice's label is used to annotate the data she wants
-to be kept secret. Supposing Alice chooses to be player 1, she may use the
+\emph{label} to protect their data. A label is unique id mapped to a
+policy predicate that takes a key (e.g., the current user's name) and
+returns true or false to indicate permission for the label. Alice's
+label is used to annotate the data she wants to be kept
+secret. Supposing Alice chooses to be player 1, she may use the
 following label:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=example]
@@ -434,6 +440,7 @@ Alice is indeed the person observing the facet:
       \begin{minipage}{.5\textwidth}
         \begin{displaymath}
           \begin{array}{rcrcl}
+            \fcol{\ell} & \fcol{\in} & \fcol{\text{label}} & \fcol{=} & \fcol{\ldots} \\
             \blue{\alpha} & \blue{\in} & \blue{\text{addr}} & \blue{=} & \blue{\ldots} \\
             \blue{bv} & \blue{\in} & \blue{\text{base-val}} & \blue{::=} & \blue{c \mid \alpha \mid \langle \lambda x.~ e, \rho \rangle \mid \star}\\
             \fcol{v} & \blue{\in} & \blue{\text{faceted-val}} & \blue{::=} & \blue{bv \mid} ~ \fcol{\facet{\blue{\alpha}}{v}{v}}
@@ -446,7 +453,7 @@ Alice is indeed the person observing the facet:
         \begin{displaymath}
           \begin{array}{rcrcl}
             \fcol{b} & \fcol{\in} & \fcol{\text{branch}} & \fcol{::=} & \fcol{+ \ell \mid - \ell} \\
-            \fcol{pc} & \fcol{\in} & \fcol{\text{PC}} & \fcol{=} & \fcol{\wp(\text{branch})} \\
+            \fcol{pc} & \fcol{\in} & \fcol{\text{PC}} & \fcol{=} & \fcol{\{S \in \wp(\text{branch}) \mid \forall \ell. \{+\ell,-\ell\} \not\subseteq S\}} \\
             \blue{\rho} & \blue{\in} & \blue{\text{env}} & \blue{=} & \blue{\text{var} \rightharpoonup v}\\
             \blue{\sigma} & \blue{\in} & \blue{\text{store}} & \blue{=} & \blue{\text{addr} \rightharpoonup v}
             \\
@@ -537,8 +544,8 @@ Alice is indeed the person observing the facet:
         \inferrule[\textsc{Let-Label}]
           {e_1, \rho, \sigma \Downarrow_{pc}^E \sigma', \langle \lambda x. ~ e, \rho' \rangle \\\\
            \alpha \not\in dom(\sigma') \and \sigma'' = \sigma' [\alpha \mapsto \langle \lambda x. ~ e, \rho' \rangle] \\\\
-           e_2, \rho [ \ell \mapsto \alpha ], \sigma'' \Downarrow_{pc}^E \sigma''', v}
-          {(\code{let-label} ~ \ell ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
+           e_2, \rho [ x \mapsto \alpha ], \sigma'' \Downarrow_{pc}^E \sigma''', v}
+          {(\code{let-label} ~ x ~ e_1 ~ e_2), \rho, \sigma \Downarrow_{pc}^E \sigma''', v}}
           & 
           {\color{colorFAC}
           \inferrule[\textsc{Obs}]
@@ -571,8 +578,8 @@ Alice is indeed the person observing the facet:
           & 
           {\color{colorFAC}
           \inferrule[\textsc{App-Split}]
-          {\{+\ell, -\ell\} \cap pc = \varnothing \and
-            (v^+ ~ v), \rho, \sigma \Downarrow_{pc \cup \{+\ell\}}^A \sigma', {v^+}' \\\\
+           {(v^+ ~ v), \rho, \sigma \Downarrow_{pc \cup \{+\ell\}}^A \sigma', {v^+}' \and
+            {\{+\ell, -\ell\} \cap pc = \varnothing} \\\\
             (v^- ~ v), \rho, \sigma' \Downarrow_{pc \cup \{-\ell\}}^A \sigma'', {v^-}' \and
             v' = \formfacet{\{+ \ell\}}{{v^+}'}{{v^-}'}}
           {(\facet{\ell}{v^+}{v^-} ~ v), \rho, \sigma \Downarrow_{pc}^A \sigma'', v'}}
@@ -655,13 +662,15 @@ follows this pattern, accounting for the relation of \rmth{\ell} to
 
 The rules \textsc{Box}, \textsc{Unbox}, and \textsc{Set} appear
 similar to the standard implementation of boxes, but employ several
-meta-functions to do their work. This is because box creation, reads,
-and writes may occur within a privileged context, and care must be
-taken to form facets when \rmth{pc} is nonempty. To understand why,
-consider the following example\footnote{Our formal semantics elides
-  \code{if}, though it may be obtained via a Church encoding if
-  desired as in Austin et al.\cite{Austin:2012}. Our implementation
-  includes \code{if} but not other constructs such as \code{cond}}:
+meta-functions to do their work (As they are largely similar to those
+in~\cite{Austin:2012}, we only detail $write$ here). This is because
+box creation, reads, and writes may occur within a privileged context,
+and care must be taken to form facets when \rmth{pc} is nonempty. To
+understand why, consider the following example\footnote{Our formal
+  semantics elides \code{if}, though it may be obtained via a Church
+  encoding if desired as in Austin et al.\cite{Austin:2012}. Our
+  implementation includes \code{if} but not other constructs such as
+  \code{cond}}:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=boxexample]
 (define x (box 0))
@@ -850,7 +859,7 @@ for facet creation. But according to our semantics, the following
 snippet should produce \code{true} if \bmth{+\ell \in pc}:
 
 \begin{lstlisting}[language=Racket,escapeinside={<@}{@>},name=other,numbers=none]
-(facet l true (error ''this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>''))
+(facet l true (error "this shouldn't get evaluated if <@\bmth{+\ell \in pc}@>"))
 \end{lstlisting}
 
 If we were to implement \code{fac} as a function, it would force
@@ -971,12 +980,14 @@ when necessary.
 Figure~\ref{fig:setbang}, which inlines the definition of the
 \textit{write} metafunction from Section~\ref{sec:semantics} to
 consider the case under which a facet is used when an address is
-expected.
+expected. In our current implementation, nothing prevents programmers
+from misusing (or forgetting to use) our custom \code{box} and
+\code{unbox} forms. We leave this to future work.
 
 Facet observation is handled similarly, first evaluating the label to
 produce a policy predicate, followed by evaluating the policy's
 argument and a possibly-faceted value to observe. After applying the
-policy its argument, we produce the value \bmth{v^{\pm}} and descend
+policy to its argument, we produce the value \bmth{v^{\pm}} and descend
 down the facet until reaching either a base value or finding the
 selected label (at which point we select the appropriate branch).
 
@@ -1031,12 +1042,12 @@ Our implementation is currently available on Github at
 
 \begin{figure*}
   \subfloat[]{%
-    \includegraphics[height=1.1in]{a.png}%
+    \includegraphics[height=2in]{a.png}%
     \label{fig:player1}%
   } 
   \quad
   \subfloat[]{%
-    \includegraphics[height=1.1in]{b.png}%
+    \includegraphics[height=2in]{b.png}%
     \label{fig:player1player2}%
   }
   \quad
@@ -1047,7 +1058,7 @@ Our implementation is currently available on Github at
   \vspace{.3in}
   \quad
   \subfloat[]{%
-    \includegraphics[height=1.1in]{d.png}%
+    \includegraphics[height=2in]{d.png}%
     \label{fig:player1afterstrike}%
   }
   \caption{Screenshots from our Battleship case study.}
@@ -1087,6 +1098,10 @@ boards with policies that reveal player 1's board when \texttt{<id>}
 is \texttt{player1}, and do the same with player 2:
 
 \begin{lstlisting}[language=Racket,escapechar=|,name=case]
+(define mkpol
+  (lambda (player-name)
+    (let-label l (lambda (x) (equal? x player-name)) l)))
+
 (define p1l (mkpol "player1"))
 (define p1board
   (box (facet p1l
@@ -1167,8 +1182,9 @@ interacts with unfaceted modules. But we do not fully understand the
 ramifications or ergonomics of this choice, and suspect there may be a
 wide array of design choices to handle these module interactions
 including security type systems and blame (to track which module
-violated the privacy policy).
-
+violated the privacy policy). We speculate that we may be able to
+piggy-back on top of Racket's existing contract system, and leave this
+to future work.
 
 \section{Related Work}
 \label{sec:related}
@@ -1257,15 +1273,12 @@ works well for Haskell programs, given that faceted execution is
 more precise than \code{LIO}---allowing values to become faceted
 rather than halting the program. One key difference is that Haskell
 programs emphasize purity while languages such as
-JavaScript (the original target of faceted execution) does not, so much
+JavaScript (the original target of faceted execution) do not, so much
 of the machinery for faceted execution's effect on the store is less
 interesting. Several authors have implemented related systems to
 \code{LIO}, including variants of faceted execution \cite{Schmitz:2016}
 and variants of \code{LIO} that extend its
-power to arbitrary monad transformers~\cite{james}. We believe that it
-would be possible to implement a variant of our technique that would
-give similar insights to programs using \code{LIO}, though much of the
-interesting machinery for handling state may be unnecessary.
+power to arbitrary monad transformers~\cite{james}.
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
